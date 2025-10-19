@@ -7,3 +7,4 @@
 // TODO: Import and render LoginForm component
 // - Handle form submission
 // - Redirect on successful login
+export default Login;

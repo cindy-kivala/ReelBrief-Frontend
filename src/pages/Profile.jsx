@@ -7,5 +7,5 @@
 // TODO: Fetch and display user data
 // - Allow editing user info
 // - Connect with userAPI.js for updates
-
+export default Profile;
 

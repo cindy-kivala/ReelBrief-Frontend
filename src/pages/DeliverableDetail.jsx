@@ -9,3 +9,4 @@
 // - Show versions with VersionCompare
 // - Display FeedbackForm for comments
 //test
+export default DeliverableDetail;

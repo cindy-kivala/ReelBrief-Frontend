@@ -7,3 +7,4 @@
 // TODO:
 // - Fetch pending freelancers
 // - Approve or reject applications
+export default FreelancerVetting;
