@@ -8,3 +8,4 @@
 // - Fetch project list from projectAPI
 // - Render ProjectCard components
 // - Add search and filter functionality
+export default ProjectList;

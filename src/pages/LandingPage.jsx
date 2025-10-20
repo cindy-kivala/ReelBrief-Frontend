@@ -107,7 +107,7 @@ export default function ReelBriefLanding() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Everything You Need in One Platform
             </h2>
-            <p className="text-xl text-gray-400">From matching to payment, we've got you covered</p>
+            <p className="text-xl text-gray-400">{`From matching to payment, we've got you covered`}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
