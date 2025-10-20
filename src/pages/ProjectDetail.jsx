@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
 /**
- * ProjectDetail.jsx
- * Owner: Monica
- * Description: Displays full project details for clients or freelancers.
- */
+  * ProjectDetail.jsx
+  * Owner: Monica
+  * Description: Displays full project details for clients or freelancers.
+  */
 
 // TODO:
 // - Fetch project details by ID from projectAPI
