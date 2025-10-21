@@ -1,4 +1,4 @@
-/**
+/** component/deliverables/CloudinaryUpload.jsx
  * CloudinaryUpload.jsx
  * Owner: Cindy
  * Description: Upload component integrated with Cloudinary for file management.

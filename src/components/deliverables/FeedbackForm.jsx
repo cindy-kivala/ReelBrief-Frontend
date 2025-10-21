@@ -1,5 +1,5 @@
 /**
- * FeedbackForm.jsx
+ * components/deliverables/FeedbackForm.jsx
  * Owner: Cindy
  * Description: Allows clients or reviewers to submit feedback on deliverables.
  */
