@@ -1,16 +1,9 @@
 /**
  * useAuth.js
  * Owner: Ryan
- * Description: Custom React hook to access authentication context.
+ * Description: Custom React hook wrapper to access authentication context.
  */
 
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
-export default function useAuth() {
-  return useContext(AuthContext);
-}
-
-
-// TODO: Implement hook to access AuthContext
-// - Return user info and auth methods (login, logout)
+export default useAuth;
