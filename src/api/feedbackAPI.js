@@ -104,3 +104,17 @@ export const unresolveFeedback = async (id) => {
     throw error.response?.data || error.message;
   }
 };
+
+// Fetch feedback statistics for a deliverable
+// Get feedback statistics for deliverable
+// @param {number} deliverableId - Deliverable ID
+// @returns {Promise} Feedback statistics
+export const getFeedbackStats = async (deliverableId) => {
+  try {
+    const response = await axiosClient.get(`/feedback/stats/${deliverableId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching feedback stats:', error);
+    throw error.response?.data || error.message;
+  }
+};
