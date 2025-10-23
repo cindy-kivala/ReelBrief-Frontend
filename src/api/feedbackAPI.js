@@ -78,3 +78,29 @@ export const deleteFeedback = async (id) => {
     throw error.response?.data || error.message;
   }
 };
+
+// Mark feedback as resolved
+// @param {number} id - Feedback ID
+// @returns {Promise} Updated feedback data
+export const resolveFeedback = async (id) => {
+  try {
+    const response = await axiosClient.patch(`/feedback/${id}/resolve`);
+    return response.data;
+  } catch (error) {
+    console.error('Error resolving feedback:', error);
+    throw error.response?.data || error.message;
+  }
+};
+
+// Mark feedback as unresolved
+// @param {number} id - Feedback ID
+// @returns {Promise} Updated feedback data
+export const unresolveFeedback = async (id) => {
+  try {
+    const response = await axiosClient.patch(`/feedback/${id}/unresolve`);
+    return response.data;
+  } catch (error) {
+    console.error('Error unresolving feedback:', error);
+    throw error.response?.data || error.message;
+  }
+};
