@@ -3,7 +3,7 @@
  * Owner: Monica
  * Description: Displays a list of available projects with filtering or search.
  */
-
+import React from 'react';
 // TODO:
 // - Fetch project list from projectAPI
 // - Render ProjectCard components
