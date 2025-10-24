@@ -9,7 +9,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   ArrowRight,
-  Maximize2
+  Maximize2 
 } from 'lucide-react';
 
 const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
@@ -22,7 +22,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
   const [zoom, setZoom] = useState(100);
   const [sliderPosition, setSliderPosition] = useState(50);
 
-  // Mock data with food images
+  // Mock data with food images 
   const mockVersions = [
     {
       id: "3",
@@ -66,7 +66,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
   const leftVersionData = displayVersions.find(v => v.id === selectedVersions.left?.id) || displayVersions[0];
   const rightVersionData = displayVersions.find(v => v.id === selectedVersions.right?.id) || displayVersions[1];
 
-  // UI Components
+  // Basic UI components 
   const Card = ({ children, className = "" }) => (
     <div className={`bg-white rounded-lg border border-[#D1D5DB] ${className}`}>
       {children}
@@ -95,14 +95,39 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
     );
   };
 
-  // FIXED: Simplified Select component
-  const Select = ({ value, onValueChange, children, className = "" }) => {
+  // Helper functions
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || isNaN(bytes)) return '0 KB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Interactive Components - FIXED: Simplified Select component
+  const Select = ({ value, onValueChange, children, className = "", placeholder = "" }) => {
     return (
       <select
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
         className={`border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-[#1E3A8A] ${className}`}
       >
+        {placeholder && <option value="">{placeholder}</option>}
         {children}
       </select>
     );
@@ -125,6 +150,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
     );
   };
 
+  // Enhanced UI Components - KEEPING ORIGINAL IMAGE FORMAT
   const ImageWithFallback = ({ src, alt, className = "" }) => {
     return (
       <img
@@ -144,21 +170,6 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
     </span>
   );
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Unknown date';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'Invalid date';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
       {/* Header */}
@@ -175,6 +186,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
               </h1>
             </div>
           </div>
+          {/* Zoom Controls */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-[#F3F4F6] rounded-lg">
               <ZoomOut className="w-4 h-4 text-[#4B5563]" />
@@ -231,6 +243,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                 </Button>
               </div>
             </div>
+            {/* Export Button */}
             <div className="flex gap-3">
               <Button variant="outline" className="border-[#D1D5DB] gap-2">
                 <Download className="w-4 h-4" />
@@ -245,7 +258,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
           <div className="lg:col-span-4">
             {comparisonMode === "side-by-side" && (
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Left Version */}
+                {/* Left Version Card - FIXED: Simplified Select usage */}
                 <Card className="p-6 border-[#D1D5DB]">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -254,7 +267,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       </h3>
                       <p className="text-sm text-[#4B5563]">{formatDate(leftVersionData?.createdAt)}</p>
                     </div>
-                    {/* FIXED: Simplified Select usage */}
+                    {/* FIXED: Direct Select usage without wrapper components */}
                     <Select 
                       value={leftVersionData?.id} 
                       onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, left: displayVersions.find(v => v.id === value) }))}
@@ -267,6 +280,8 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       ))}
                     </Select>
                   </div>
+                  
+                  {/* Image Preview - KEEPING ORIGINAL FORMAT */}
                   <div className="bg-[#F3F4F6] rounded-lg overflow-hidden mb-4 flex items-center justify-center min-h-[400px]">
                     <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: "center" }}>
                       <ImageWithFallback
@@ -276,6 +291,8 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       />
                     </div>
                   </div>
+                  
+                  {/* Changes List */}
                   <div className="space-y-2">
                     <h4 className="text-sm text-[#1F2937] font-semibold">Changes:</h4>
                     <ul className="space-y-1">
@@ -289,7 +306,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                   </div>
                 </Card>
 
-                {/* Right Version */}
+                {/* Right Version Card - FIXED: Simplified Select usage */}
                 <Card className="p-6 border-[#D1D5DB]">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -298,7 +315,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       </h3>
                       <p className="text-sm text-[#4B5563]">{formatDate(rightVersionData?.createdAt)}</p>
                     </div>
-                    {/* FIXED: Simplified Select usage */}
+                    {/* FIXED: Direct Select usage without wrapper components */}
                     <Select 
                       value={rightVersionData?.id} 
                       onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, right: displayVersions.find(v => v.id === value) }))}
@@ -311,6 +328,8 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       ))}
                     </Select>
                   </div>
+                  
+                  {/* Image Preview - KEEPING ORIGINAL FORMAT */}
                   <div className="bg-[#F3F4F6] rounded-lg overflow-hidden mb-4 flex items-center justify-center min-h-[400px]">
                     <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: "center" }}>
                       <ImageWithFallback
@@ -320,6 +339,8 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                       />
                     </div>
                   </div>
+                  
+                  {/* Changes List */}
                   <div className="space-y-2">
                     <h4 className="text-sm text-[#1F2937] font-semibold">Changes:</h4>
                     <ul className="space-y-1">
@@ -335,11 +356,150 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
               </div>
             )}
 
-            {/* Other comparison modes remain the same but use the fixed Select component */}
-            {/* ... rest of the component ... */}
+            {/* Slider Mode - FIXED: Simplified Select usage */}
+            {comparisonMode === "slider" && (
+              <Card className="p-6 border-[#D1D5DB]">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <h3 className="text-[#1F2937] font-semibold">Version {leftVersionData?.version}</h3>
+                      <p className="text-xs text-[#4B5563]">{formatDate(leftVersionData?.createdAt)}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-[#4B5563]" />
+                    <div>
+                      <h3 className="text-[#1F2937] font-semibold">Version {rightVersionData?.version}</h3>
+                      <p className="text-xs text-[#4B5563]">{formatDate(rightVersionData?.createdAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* FIXED: Direct Select usage without wrapper components */}
+                    <Select 
+                      value={leftVersionData?.id} 
+                      onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, left: displayVersions.find(v => v.id === value) }))}
+                      className="w-32"
+                    >
+                      {displayVersions.map((v) => (
+                        <option key={v.id} value={v.id} disabled={v.id === selectedVersions.right?.id}>
+                          Version {v.version}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select 
+                      value={rightVersionData?.id} 
+                      onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, right: displayVersions.find(v => v.id === value) }))}
+                      className="w-32"
+                    >
+                      {displayVersions.map((v) => (
+                        <option key={v.id} value={v.id} disabled={v.id === selectedVersions.left?.id}>
+                          Version {v.version}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+                <div className="relative bg-[#F3F4F6] rounded-lg overflow-hidden" style={{ minHeight: "500px" }}>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: "center" }}>
+                      <div className="relative">
+                        <ImageWithFallback
+                          src={leftVersionData?.thumbnailUrl || ""}
+                          alt={leftVersionData?.name || ""}
+                          className="rounded-lg"
+                        />
+                        <div
+                          className="absolute top-0 right-0 bottom-0 overflow-hidden"
+                          style={{ left: `${sliderPosition}%` }}
+                        >
+                          <ImageWithFallback
+                            src={rightVersionData?.thumbnailUrl || ""}
+                            alt={rightVersionData?.name || ""}
+                            className="rounded-lg"
+                          />
+                        </div>
+                        <div
+                          className="absolute top-0 bottom-0 w-1 bg-[#1E3A8A] cursor-ew-resize z-10"
+                          style={{ left: `${sliderPosition}%` }}
+                        >
+                          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 left-0 w-8 h-8 bg-[#1E3A8A] rounded-full flex items-center justify-center shadow-lg">
+                            <ArrowRight className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Slider
+                    value={[sliderPosition]}
+                    onValueChange={(value) => setSliderPosition(value[0])}
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                </div>
+              </Card>
+            )}
+
+            {/* Overlay Mode - FIXED: Simplified Select usage */}
+            {comparisonMode === "overlay" && (
+              <Card className="p-6 border-[#D1D5DB]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[#1F2937] font-semibold">Overlay Comparison</h3>
+                  <div className="flex gap-2">
+                    {/* FIXED: Direct Select usage without wrapper components */}
+                    <Select 
+                      value={leftVersionData?.id} 
+                      onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, left: displayVersions.find(v => v.id === value) }))}
+                      className="w-32"
+                      placeholder="Base"
+                    >
+                      {displayVersions.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          Version {v.version}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select 
+                      value={rightVersionData?.id} 
+                      onValueChange={(value) => setSelectedVersions(prev => ({ ...prev, right: displayVersions.find(v => v.id === value) }))}
+                      className="w-32"
+                      placeholder="Overlay"
+                    >
+                      {displayVersions.map((v) => (
+                        <option key={v.id} value={v.id} disabled={v.id === selectedVersions.left?.id}>
+                          Version {v.version}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+                <div className="relative bg-[#F3F4F6] rounded-lg overflow-hidden flex items-center justify-center" style={{ minHeight: "500px" }}>
+                  <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: "center" }}>
+                    <div className="relative">
+                      <ImageWithFallback
+                        src={leftVersionData?.thumbnailUrl || ""}
+                        alt={leftVersionData?.name || ""}
+                        className="rounded-lg"
+                      />
+                      <div className="absolute inset-0 opacity-50">
+                        <ImageWithFallback
+                          src={rightVersionData?.thumbnailUrl || ""}
+                          alt={rightVersionData?.name || ""}
+                          className="rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-[#4B5563] text-center mt-4">
+                  Version {rightVersionData?.version} is overlaid at 50% opacity on Version {leftVersionData?.version}
+                </p>
+              </Card>
+            )}
           </div>
 
-          {/* Version History Sidebar */}
+          {/* Version History Sidebar - KEEPING ORIGINAL IMAGE FORMAT */}
           <div className="lg:col-span-1">
             <Card className="p-4 border-[#D1D5DB]">
               <h3 className="text-[#1F2937] mb-4 font-semibold">Version History</h3>
@@ -366,6 +526,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
                         <CheckCircle2 className="w-4 h-4 text-[#1E3A8A]" />
                       )}
                     </div>
+                    {/* KEEPING ORIGINAL THUMBNAIL FORMAT */}
                     <div className="w-full h-16 bg-white rounded overflow-hidden mb-2">
                       <ImageWithFallback
                         src={version.thumbnailUrl}
@@ -379,6 +540,7 @@ const VersionCompare = ({ versions = [], currentVersion, onBack }) => {
               </div>
             </Card>
 
+            {/* Differences Summary Panel*/}
             <Card className="p-4 border-[#D1D5DB] mt-4">
               <h3 className="text-[#1F2937] mb-3 font-semibold">Differences</h3>
               <div className="space-y-2">

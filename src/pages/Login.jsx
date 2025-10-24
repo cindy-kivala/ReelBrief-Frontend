@@ -11,6 +11,7 @@ import React from 'react';
 import VersionCompare from '../components/deliverables/VersionCompare';
 // import FeedbackForm from '../components/deliverables/FeedbackForm';
 // import CloudinaryUpload from '../components/deliverables/CloudinaryUpload';
+// import DeliverableDetail from './DeliverableDetail';
 
 function Login() {
   return (
@@ -18,6 +19,7 @@ function Login() {
       <h1>Login Page</h1>
       {/* <LoginForm /> will go here once implemented */}
       <VersionCompare />
+      {/* <DeliverableDetail /> */}
       {/* <FeedbackForm /> */}
       {/* <CloudinaryUpload /> */}
     </div>
