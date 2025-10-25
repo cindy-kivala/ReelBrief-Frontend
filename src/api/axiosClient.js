@@ -7,17 +7,16 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL, // ✅ flexible for local or production
   headers: { "Content-Type": "application/json" },
 });
 
 // -------------------- Token Helpers --------------------
-const ACCESS_TOKEN_KEY = "accessToken";
+const ACCESS_TOKEN_KEY = "token";
 const REFRESH_TOKEN_KEY = "refreshToken";
 
 const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
-
 const setAccessToken = (token) => localStorage.setItem(ACCESS_TOKEN_KEY, token);
 const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
@@ -40,11 +39,10 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Case 1: Unauthorized (token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
       const refreshToken = getRefreshToken();
+
       if (!refreshToken) {
         clearTokens();
         window.location.href = "/login";
@@ -52,16 +50,13 @@ axiosClient.interceptors.response.use(
       }
 
       try {
-        // Attempt token refresh
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/auth/refresh`,
+          `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { refresh_token: refreshToken }
         );
 
         if (res.data?.access_token) {
           setAccessToken(res.data.access_token);
-
-          // Update header and retry original request
           originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
           return axiosClient(originalRequest);
         }
@@ -73,7 +68,6 @@ axiosClient.interceptors.response.use(
       }
     }
 
-    // Case 2: Any other error
     return Promise.reject(error);
   }
 );
