@@ -23,6 +23,7 @@ import ClientProjects from '../pages/client/ClientProjects';
 
 // Shared Protected Pages
 import ProjectDetail from '../pages/ProjectDetail';
+import DeliverableDetail from '../pages/DeliverableDetail';
 import Profile from '../pages/Profile';
 
 // Protected Route Component
@@ -132,6 +133,17 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/deliverables/:id"
+        element={
+          <ProtectedRoute>
+            <DeliverableDetail />
+          </ProtectedRoute>
+        }
+      />
+
+
       <Route
         path="/profile"
         element={

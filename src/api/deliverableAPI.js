@@ -1,157 +1,153 @@
-/**
- * deliverableAPI.js
- * Owner: Cindy
- * Description: Handles API requests related to deliverables — upload, update, and retrieval.
- */
-import axiosClient from './axiosClient';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
-// Fetch all deliverables for a project
-//  @param {number} projectId - Project ID
-//  @param {object} params - Query parameters (page, per_page, version, status)
-//  @returns {Promise} Deliverables data
- 
-export const fetchDeliverables = async (projectId, params = {}) => {
-  try {
-    const response = await axiosClient.get(`/deliverables/projects/${projectId}`, { params });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching deliverables:', error);
-    throw error.response?.data || error.message;
+//  MOCK DATA
+const mockDeliverables = [
+  {
+    id: 1,
+    title: "Website Homepage Design",
+    version_number: 1,
+    status: "in_review",
+    file_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800",
+    file_type: "image",
+    file_size: 2048576,
+    uploaded_at: "2024-01-15T10:30:00Z",
+    project_id: 1,
+    uploader: {
+      first_name: "John",
+      last_name: "Designer",
+      email: "john@example.com"
+    },
+    change_notes: "Initial design submission"
+  },
+  {
+    id: 2,
+    title: "Website Homepage Design",
+    version_number: 2,
+    status: "pending",
+    file_url: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=800",
+    file_type: "image",
+    file_size: 2097152,
+    uploaded_at: "2024-01-20T14:45:00Z",
+    project_id: 1,
+    uploader: {
+      first_name: "John",
+      last_name: "Designer",
+      email: "john@example.com"
+    },
+    change_notes: "Updated based on client feedback"
   }
+];
+
+//  MOCK FUNCTIONS
+const mockFetchDeliverableById = async (id) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  const deliverable = mockDeliverables.find(d => d.id === parseInt(id));
+  if (!deliverable) throw new Error('Deliverable not found');
+  return { success: true, deliverable };
 };
 
-//  Fetch specific deliverable by ID
-//  @param {number} id - Deliverable ID
-//  @returns {Promise} Deliverable data with feedback
- 
-export const fetchDeliverableById = async (id) => {
-  try {
-    const response = await axiosClient.get(`/deliverables/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching deliverable:', error);
-    throw error.response?.data || error.message;
-  }
+const mockApproveDeliverable = async (id) => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+  const deliverable = mockDeliverables.find(d => d.id === parseInt(id));
+  if (!deliverable) throw new Error('Deliverable not found');
+  deliverable.status = 'approved';
+  return { success: true, message: 'Deliverable approved successfully', deliverable };
 };
 
-// Upload new deliverable
-// @param {FormData} formData - Form data with file and metadata
-// @returns {Promise} Created deliverable data
-
-export const uploadDeliverable = async (formData) => {
-  try {
-    const response = await axiosClient.post('/deliverables/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading deliverable:', error);
-    throw error.response?.data || error.message;
-  }
+const mockGetDeliverableVersions = async (id) => {
+  await new Promise(resolve => setTimeout(resolve, 600));
+  const mainDeliverable = mockDeliverables.find(d => d.id === parseInt(id));
+  if (!mainDeliverable) throw new Error('Deliverable not found');
+  const versions = mockDeliverables.filter(d => d.title === mainDeliverable.title);
+  return { success: true, versions, total_versions: versions.length };
 };
 
-// Update deliverable metadata
-// @param {number} id - Deliverable ID
-// @param {object} data - Update data (title, description)
-// @returns {Promise} Updated deliverable data
-export const updateDeliverable = async (id, data) => {
-  try {
-    const response = await axiosClient.patch(`/deliverables/${id}`, data);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating deliverable:', error);
-    throw error.response?.data || error.message;
-  }
+const mockUploadDeliverable = async (projectId, formData) => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  const newDeliverable = {
+    id: mockDeliverables.length + 1,
+    title: formData.get('title') || `Deliverable ${mockDeliverables.length + 1}`,
+    version_number: mockDeliverables.filter(d => d.project_id === projectId).length + 1,
+    status: "pending",
+    file_url: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=800",
+    file_type: "image",
+    file_size: 0,
+    uploaded_at: new Date().toISOString(),
+    project_id: projectId,
+    uploader: {
+      first_name: "Current",
+      last_name: "User", 
+      email: "user@example.com"
+    },
+    change_notes: formData.get('change_notes') || "New version uploaded"
+  };
+  mockDeliverables.push(newDeliverable);
+  return { success: true, message: 'Deliverable uploaded successfully', deliverable: newDeliverable };
 };
 
-// Delete deliverable
-// @param {number} id - Deliverable ID
-// @returns {Promise} Success message
-
-export const deleteDeliverable = async (id) => {
-  try {
-    const response = await axiosClient.delete(`/deliverables/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting deliverable:', error);
-    throw error.response?.data || error.message;
-  }
+// PRODUCTION FUNCTIONS
+// GET /api/deliverables/:id
+const prodFetchDeliverableById = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!response.ok) throw new Error('Failed to fetch deliverable');
+  return await response.json();
 };
 
-//Approve deliverable
-//@param {number} id - Deliverable ID
-// @returns {Promise} Approved deliverable data
-
-export const approveDeliverable = async (id) => {
-  try {
-    const response = await axiosClient.post(`/deliverables/${id}/approve`);
-    return response.data;
-  } catch (error) {
-    console.error('Error approving deliverable:', error);
-    throw error.response?.data || error.message;
-  }
+// POST /api/deliverables/:id/approve
+const prodApproveDeliverable = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/approve`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!response.ok) throw new Error('Failed to approve deliverable');
+  return await response.json();
 };
 
-// Request revision on deliverable
-// @param {number} id - Deliverable ID
-// @param {object} revisionData - Revision request data (content, priority)
-// @returns {Promise} Deliverable with feedback
-
-export const requestRevision = async (id, revisionData) => {
-  try {
-    const response = await axiosClient.post(`/deliverables/${id}/request-revision`, revisionData);
-    return response.data;
-  } catch (error) {
-    console.error('Error requesting revision:', error);
-    throw error.response?.data || error.message;
-  }
+// GET /api/deliverables/:id/versions
+const prodGetDeliverableVersions = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/versions`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+  if (!response.ok) throw new Error('Failed to fetch versions');
+  return await response.json();
 };
 
-// Reject deliverable
-// @param {number} id - Deliverable ID
-// @param {string} reason - Reason for rejection
-// @returns {Promise} Rejected deliverable data
-
-export const rejectDeliverable = async (id, reason = '') => {
-  try {
-    const response = await axiosClient.post(`/deliverables/${id}/reject`, { reason });
-    return response.data;
-  } catch (error) {
-    console.error('Error rejecting deliverable:', error);
-    throw error.response?.data || error.message;
+// POST /api/deliverables (with multipart/form-data)
+const prodUploadDeliverable = async (projectId, formData) => {
+  // Ensure project_id is in formData
+  if (!formData.has('project_id')) {
+    formData.append('project_id', projectId);
   }
+  
+  const response = await fetch(`${API_BASE_URL}/api/deliverables`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      // Remember== Don't set Content-Type for FormData - browser sets it automatically with boundary
+    },
+    body: formData
+  });
+  if (!response.ok) throw new Error('Failed to upload deliverable');
+  return await response.json();
 };
 
-// Get all versions of a deliverable
-// @param {number} id - Deliverable ID
-// @returns {Promise} Array of all versions
+// EXPORTS (Toggle based on environment) 
+export const fetchDeliverableById = USE_MOCK_DATA ? mockFetchDeliverableById : prodFetchDeliverableById;
+export const approveDeliverable = USE_MOCK_DATA ? mockApproveDeliverable : prodApproveDeliverable;
+export const getDeliverableVersions = USE_MOCK_DATA ? mockGetDeliverableVersions : prodGetDeliverableVersions;
+export const uploadDeliverable = USE_MOCK_DATA ? mockUploadDeliverable : prodUploadDeliverable;
 
-export const getDeliverableVersions = async (id) => {
-  try {
-    const response = await axiosClient.get(`/deliverables/${id}/versions`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching versions:', error);
-    throw error.response?.data || error.message;
-  }
-};
-
-// Compare two deliverable versions
-// @param {number} version1Id - First version ID
-// @param {number} version2Id - Second version ID
-// @returns {Promise} Comparison data
- 
-export const compareVersions = async (version1Id, version2Id) => {
-  try {
-    const response = await axiosClient.post('/deliverables/compare', {
-      version1_id: version1Id,
-      version2_id: version2Id,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error comparing versions:', error);
-    throw error.response?.data || error.message;
-  }
-};

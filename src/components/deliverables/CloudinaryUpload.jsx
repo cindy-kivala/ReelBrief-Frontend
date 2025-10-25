@@ -5,7 +5,7 @@
  */
 import { useState, useRef } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, File } from 'lucide-react';
-import { uploadDeliverable } from '../../api/deliverableAPI';
+import { uploadDeliverable } from '/src/api/deliverableAPI';
 
 const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
   const [selectedFile, setSelectedFile] = useState(null);
