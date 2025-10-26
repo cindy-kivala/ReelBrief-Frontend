@@ -1,84 +1,152 @@
 import Navbar from "../../components/layout/Navbar";
 import Sidebar from "../../components/layout/Sidebar";
 
-export default function ClientDashboard() {
+import React from "react";
+
+function ClientDashboard() {
   return (
-    <div className="dashboard-layout flex min-h-screen bg-gray-50">
-      <Sidebar />
+    <div className="bg-gray-100 min-h-screen p-6 md:ml-64 mt-16">
 
-      <main className="flex-1 p-8">
-        <Navbar />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
+        <div>
+          <h1 className="font-bold text-3xl text-gray-800">Welcome back, John </h1>
+          <p className="text-gray-600 mt-1">
+            Here's what's happening with your projects
+          </p>
+        </div>
+        <button className="mt-4 sm:mt-0 bg-blue-800 px-4 py-2 rounded-lg text-white font-medium hover:bg-blue-600 transition">
+          + New Project
+        </button>
+      </div>
 
-        {/* Welcome Section */}
-        <section className="mb-8">
-          <h1 className="text-3xl font-bold">Welcome back, John</h1>
-          <p className="text-gray-500">Here's what's happening with your projects</p>
-        </section>
-
-        {/* Stats Section */}
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-          <div className="stat-card">
-            <p className="stat-number">3</p>
-            <p className="stat-label">Active Projects</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-number">1</p>
-            <p className="stat-label">In Review</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-number">12</p>
-            <p className="stat-label">Completed</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-number">$24.5k</p>
-            <p className="stat-label">Total Spent</p>
-          </div>
-        </section>
-
-        {/* Recent Projects Section */}
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Projects</h2>
-            <button className="btn-link">View All</button>
-          </div>
-
-          <div className="project-card">
-            <h3 className="font-semibold">Logo Design for TechCo</h3>
-            <p className="text-sm text-gray-500">Freelancer: Sarah Johnson</p>
-            <div className="flex justify-between text-sm mt-1">
-              <span>$1,500</span>
-              <span>Due Apr 25, 2025</span>
-            </div>
-            <div className="progress-bar mt-2">
-              <div className="progress w-[60%]" />
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { icon: "fi fi-rr-folder-open", label: "Active Projects", value: "3" },
+          { icon: "fi fi-rr-clock-three", label: "In Review", value: "1" },
+          { icon: "fi fi-rs-check-circle", label: "Completed", value: "5" },
+          { icon: "fi fi-rr-dollar", label: "Total Spent", value: "$24.5K" },
+        ].map((card, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-xl border border-gray-300 p-5 text-center"
+          >
+            <div className="flex flex-col items-center gap-2">
+              <i className={`${card.icon} text-2xl text-blue-700`}></i>
+              <p className="text-2xl font-bold text-gray-700">{card.value}</p>
+              <h3 className="text-sm text-gray-600 font-medium">{card.label}</h3>
             </div>
           </div>
+        ))}
+      </section>
 
-          <div className="project-card">
-            <h3 className="font-semibold">Website Copy</h3>
-            <p className="text-sm text-gray-500">Freelancer: Michael Chen</p>
-            <div className="flex justify-between text-sm mt-1">
-              <span>$2,200</span>
-              <span>Due Apr 22, 2025</span>
+      <section className="mt-10 bg-white p-6 rounded-xl border border-gray-300">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-bold text-2xl text-gray-800">Recent Projects</h1>
+          <a
+            href="#"
+            className=" text-blue-500 px-4 py-2 rounded-lg hover:bg-red-400 hover:text-white transition"
+          >
+            View All
+          </a>
+        </div>
+
+        <div className="flex flex-col gap-5">
+          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
+            <div className="flex flex-wrap items-center justify-between mb-2">
+              <h2 className="font-semibold text-lg text-gray-800">
+                Logo Design for TechCo
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="bg-blue-700 text-white text-sm px-3 py-1 rounded-xl">
+                  In Progress
+                </span>
+                <a
+                  href="#"
+                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
+                >
+                  View Details
+                </a>
+              </div>
             </div>
-            <div className="progress-bar mt-2">
-              <div className="progress w-full" />
+            <p className="text-gray-600 text-sm">Freelancer: Sarah Johnson</p>
+            <p className="text-gray-600 text-sm">$1500 • Due Apr 25</p>
+
+            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: "60%" }}
+              ></div>
             </div>
+            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
+              60% Complete
+            </p>
           </div>
 
-          <div className="project-card">
-            <h3 className="font-semibold">Video Editing</h3>
-            <p className="text-sm text-gray-500">Freelancer: Jane Smith</p>
-            <div className="flex justify-between text-sm mt-1">
-              <span>$800</span>
-              <span>Due Apr 30, 2025</span>
+          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
+            <div className="flex flex-wrap items-center justify-between mb-2">
+              <h2 className="font-semibold text-lg text-gray-800">
+                Website Copy
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-xl">
+                  Needs Review
+                </span>
+                <a
+                  href="#"
+                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
+                >
+                  View Details
+                </a>
+              </div>
             </div>
-            <div className="progress-bar mt-2">
-              <div className="progress w-full bg-green-500" />
+            <p className="text-gray-600 text-sm">Freelancer: Michael Chen</p>
+            <p className="text-gray-600 text-sm">$2200 • Due Apr 25</p>
+
+            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-yellow-500 h-2.5 rounded-full"
+                style={{ width: "40%" }}
+              ></div>
             </div>
+            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
+              40% Complete
+            </p>
           </div>
-        </section>
-      </main>
+
+          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
+            <div className="flex flex-wrap items-center justify-between mb-2">
+              <h2 className="font-semibold text-lg text-gray-800">
+                Video Editing
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-xl">
+                  Completed
+                </span>
+                <a
+                  href="#"
+                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
+                >
+                  View Details
+                </a>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm">Freelancer: Emma Davis</p>
+            <p className="text-gray-600 text-sm">$3500 • Due Apr 25</p>
+
+            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-green-600 h-2.5 rounded-full"
+                style={{ width: "100%" }}
+              ></div>
+            </div>
+            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
+              100% Complete
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
+
+export default ClientDashboard;
