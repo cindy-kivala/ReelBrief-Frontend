@@ -1,66 +1,96 @@
 /**
  * AuthContext.jsx
  * Owner: Ryan
- * Description: Provides authentication context to the React app.
+ * Description: Provides authentication context and state management for ReelBrief frontend.
  */
 
-// TODO: Create AuthContext
-// - Manage user state and authentication token
-// - Expose login, logout, register, and getCurrentUser methods
+import { createContext, useContext, useState, useEffect } from "react";
+import authAPI from "../api/authAPI";
+import toast from "react-hot-toast";
 
-// Example:
-// const AuthContext = createContext();
-//Ryan, I've added these be do npm run build successfully 
-// import { useContext, createContext, useState } from 'react';
+// -------------------- Create Context --------------------
+const AuthContext = createContext(null);
 
-// const AuthContext = createContext();
+// -------------------- Provider --------------------
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const value = { user, setUser };
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// };
+  // -------------------- Check Current User --------------------
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-// export const useAuth = () => useContext(AuthContext);
+    const fetchUser = async () => {
+      try {
+        const res = await authAPI.getCurrentUser();
+        setUser(res.data);
+      } catch {
+        localStorage.removeItem("token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-// AuthContext.jsx - TEMPORARY FOR TESTING
-import React, { createContext, useContext, useState } from 'react';
+    fetchUser();
+  }, []);
 
-const AuthContext = createContext();
+  // -------------------- Auth Actions --------------------
+  const login = async (credentials) => {
+    try {
+      const res = await authAPI.login(credentials);
+      localStorage.setItem("token", res.data.access_token);
+      setUser(res.data.user);
+      toast.success(`Welcome back, ${res.data.user.name || "User"}!`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Login failed");
+    }
+  };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+  const register = async (data) => {
+    try {
+      await authAPI.register(data);
+      toast.success("Account created! Check your email to verify.");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Registration failed");
+    }
+  };
 
-export const AuthProvider = ({ children }) => {
-  // TEMPORARY: Mock authenticated user for testing
-  const [user] = useState({
-    id: 1,
-    email: 'test@example.com',
-    first_name: 'Test',
-    last_name: 'User',
-    role: 'client' // Change to 'freelancer' or 'admin' to test different roles
-  });
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    toast.success("Logged out successfully");
+  };
 
-  const [isAuthenticated] = useState(true); // TEMPORARY: Always authenticated
-  const [loading] = useState(false);
-
+  // -------------------- Context Value --------------------
   const value = {
     user,
-    isAuthenticated,
     loading,
-    login: async () => {},
-    logout: async () => {},
-    register: async () => {}
+    login,
+    register,
+    logout,
+    isAuthenticated: !!user,
+    isAdmin: user?.role === "admin",
+    isFreelancer: user?.role === "freelancer",
+    isClient: user?.role === "client",
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}
+
+// -------------------- Hook --------------------
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}

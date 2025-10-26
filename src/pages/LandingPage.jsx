@@ -1,170 +1,62 @@
-import Button from "../components/common/Button";
-import Card from "../components/common/Card";
-import { Briefcase, Users, Shield, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export function LandingPage({ onGetStarted, onLogin, onWatchDemo }) {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b bg-white sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-semibold text-gray-900">ReelBrief</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={onLogin}
-                className="text-gray-700 hover:text-blue-600"
-              >
-                Sign In
-              </Button>
-              <Button 
-                onClick={onGetStarted}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Get Started
-              </Button>
-            </div>
-          </div>
+    <div className="landing-page min-h-screen bg-white flex flex-col">
+      {/* Navbar */}
+      <nav className="navbar flex justify-between items-center px-8 py-4 border-b">
+        <div className="text-2xl font-bold text-blue-700">ReelBrief</div>
+        <div className="flex items-center gap-6">
+          <a href="#features" className="nav-link text-gray-600">Features</a>
+          <a href="#how-it-works" className="nav-link text-gray-600">How It Works</a>
+          <a href="#reviews" className="nav-link text-gray-600">Reviews</a>
+          <Link to="/login" className="btn-secondary">Sign In</Link>
+          <Link to="/register" className="btn-primary">Get Started</Link>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            Connect Talent with Creative Projects
+      <section className="hero flex flex-col md:flex-row items-center justify-between px-10 py-16">
+        <div className="max-w-lg">
+          <p className="text-sm text-red-400 font-medium mb-3">🔥 Trusted by 1000+ Creatives</p>
+          <h1 className="text-5xl font-bold text-gray-800 mb-6">
+            Connect Talent with <br /> Creative Projects
           </h1>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-gray-500 mb-8 leading-relaxed">
             The professional platform matching skilled freelancers with clients who need exceptional creative work.
+            Secure payments, seamless collaboration.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={onGetStarted}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Start Free Trial
-            </Button>
-            <Button 
-              size="lg" 
-              onClick={onWatchDemo}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Watch Demo
-            </Button>
-          </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose ReelBrief?</h2>
-            <p className="text-gray-600">Simple, secure, and effective</p>
+          <div className="flex gap-4">
+            <button className="btn-primary">Start Free Trial</button>
+            <button className="btn-outline">Watch Demo</button>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Users,
-                title: "Curated Talent",
-                description: "Access pre-vetted freelancers with proven track records"
-              },
-              {
-                icon: Shield,
-                title: "Secure Payments",
-                description: "Protected escrow system ensures safe transactions"
-              },
-              {
-                icon: CheckCircle2,
-                title: "Quality Work",
-                description: "Structured review process with approval workflows"
-              }
-            ].map((feature, index) => (
-              <Card key={index} className="p-6 text-center border border-gray-200">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
-                  <feature.icon className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8 mt-12">
-            {[
-              {
-                step: "1",
-                title: "Post Project",
-                description: "Share your project details and requirements"
-              },
-              {
-                step: "2",
-                title: "Get Matched",
-                description: "We find the perfect freelancer for your needs"
-              },
-              {
-                step: "3",
-                title: "Collaborate",
-                description: "Work together and release payment upon approval"
-              }
-            ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
-                  <span className="text-white font-semibold">{item.step}</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
-          <p className="text-gray-600 mb-8">
-            Join our community of freelancers and clients creating amazing work together
-          </p>
-          <Button 
-            size="lg" 
-            onClick={onGetStarted}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Start Your Free Trial
-          </Button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-200 py-8 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-white" />
+          <div className="mt-8 text-gray-600 flex gap-8">
+            <div>
+              <p className="font-semibold">1,200+</p>
+              <p className="text-sm">Active Freelancers</p>
             </div>
-            <span className="font-semibold text-gray-900">ReelBrief</span>
+            <div>
+              <p className="font-semibold">99.5%</p>
+              <p className="text-sm">Success Rate</p>
+            </div>
+            <div>
+              <p className="font-semibold">4.9/5</p>
+              <p className="text-sm">Client Rating</p>
+            </div>
           </div>
-          <p className="text-gray-600 text-sm">© 2025 ReelBrief. All rights reserved.</p>
         </div>
-      </footer>
+
+        {/* Hero Image */}
+        <div className="hero-image mt-10 md:mt-0 md:w-1/2">
+          <img
+            src="/images/creative-office.jpg"
+            alt="Creative workspace"
+            className="rounded-lg shadow-md w-full h-auto object-cover"
+          />
+        </div>
+      </section>
     </div>
   );
 }
-
-export default LandingPage;
