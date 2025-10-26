@@ -1,5 +1,5 @@
 /**
- * VersionCompare.jsx
+ * components/deliverables/VersionCompare.jsx
  * Owner: Cindy
  * Description: Compares two versions of a deliverable visually or textually.
  */
