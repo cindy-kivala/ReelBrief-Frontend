@@ -1,20 +1,33 @@
-// // /**
-// //  * Login.jsx
-// //  * Owner: Ryan
-// //  * Description: Page for user login.
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) return;
-    login(form);
+    
+    try {
+      const user = await login(form);
+      
+      // Navigate based on user role
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (user.role === "freelancer") {
+        navigate("/freelancer/dashboard");
+      } else if (user.role === "client") {
+        navigate("/client/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      // Error already handled by login function 
+      console.error("Login error:", error);
+    }
   };
 
   return (
@@ -88,7 +101,7 @@ export default function Login() {
         {/* Sign Up & Back Links */}
         <div className="text-center mt-6">
           <p className="text-gray-600 text-sm">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link to="/register" className="text-blue-600 hover:underline">
               Sign up
             </Link>
@@ -105,10 +118,9 @@ export default function Login() {
         <div className="demo-box mt-8 border rounded-md p-4 text-sm bg-gray-50">
           <p className="font-semibold mb-2">Demo Test Accounts:</p>
           <ul className="space-y-1 text-gray-700">
-            <li>• Client: <code>client@test.com</code></li>
-            <li>• Freelancer: <code>freelancer@test.com</code></li>
-            <li>• Admin: <code>admin@test.com</code></li>
-            <li>Password: <code>any password</code></li>
+            <li>• Admin: <code>admin@reelbrief.com</code> / <code>admin123</code></li>
+            <li>• Client: <code>sarah.johnson@techstartup.com</code> / <code>demo123</code></li>
+            <li>• Freelancer: <code>alex.designer@demo.com</code> / <code>demo123</code></li>
           </ul>
         </div>
       </div>

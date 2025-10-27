@@ -8,15 +8,15 @@ import { createContext, useContext, useState, useEffect } from "react";
 import authAPI from "../api/authAPI";
 import toast from "react-hot-toast";
 
-// -------------------- Create Context --------------------
+// Create Context for Auth
 const AuthContext = createContext(null);
 
-// -------------------- Provider --------------------
+//  Provider Component
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // -------------------- Check Current User --------------------
+  // Check Current User and set auth state on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -27,9 +27,10 @@ export function AuthProvider({ children }) {
     const fetchUser = async () => {
       try {
         const res = await authAPI.getCurrentUser();
-        setUser(res.data);
+        setUser(res);
       } catch {
         localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         setUser(null);
       } finally {
         setLoading(false);
@@ -39,15 +40,16 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, []);
 
-  // -------------------- Auth Actions --------------------
+  //  Auth Actions to be provided in context
   const login = async (credentials) => {
     try {
-      const res = await authAPI.login(credentials);
-      localStorage.setItem("token", res.data.access_token);
-      setUser(res.data.user);
-      toast.success(`Welcome back, ${res.data.user.name || "User"}!`);
+      const user = await authAPI.login(credentials);
+      setUser(user);
+      toast.success(`Welcome back, ${user.first_name || "User"}!`);
+      return user; // Return user so component can navigate
     } catch (err) {
       toast.error(err.response?.data?.error || "Login failed");
+      throw err;
     }
   };
 
@@ -57,16 +59,18 @@ export function AuthProvider({ children }) {
       toast.success("Account created! Check your email to verify.");
     } catch (err) {
       toast.error(err.response?.data?.error || "Registration failed");
+      throw err;
     }
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setUser(null);
     toast.success("Logged out successfully");
   };
 
-  // -------------------- Context Value --------------------
+  //  Context Value to keep track of auth state and actions
   const value = {
     user,
     loading,
@@ -86,7 +90,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// -------------------- Hook --------------------
+// -Hook to use Auth Context 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

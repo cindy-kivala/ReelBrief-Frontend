@@ -3,18 +3,24 @@
  * Owner: Ryan
  * Description: Global Axios instance with JWT interceptors and auto-refresh logic.
  */
+/**
+ * axiosClient.js
+ * Owner: Ryan
+ * Description: Global Axios instance with JWT interceptors - DEMO FIXED VERSION
+ */
 
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
   headers: {
     'Content-Type': 'application/json',
   },
+  // REMOVED: withCredentials: true - This was causing CORS issues
 });
 
 // -------------------- Token Helpers --------------------
-const ACCESS_TOKEN_KEY = "token";
+const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 
 const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -29,7 +35,9 @@ const clearTokens = () => {
 axiosClient.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -41,6 +49,7 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 401 errors (Unauthorized)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refreshToken = getRefreshToken();
@@ -52,14 +61,16 @@ axiosClient.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+        // Attempt to refresh token
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/auth/refresh`,
           { refresh_token: refreshToken }
         );
 
-        if (res.data?.access_token) {
-          setAccessToken(res.data.access_token);
-          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+        if (response.data?.access_token) {
+          setAccessToken(response.data.access_token);
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
           return axiosClient(originalRequest);
         }
       } catch (refreshError) {
@@ -70,6 +81,7 @@ axiosClient.interceptors.response.use(
       }
     }
 
+    // Handle other errors
     return Promise.reject(error);
   }
 );
