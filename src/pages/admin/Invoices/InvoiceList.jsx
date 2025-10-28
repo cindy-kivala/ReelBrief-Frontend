@@ -9,7 +9,7 @@ import { fetchInvoices } from "@/api/invoiceAPI";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-const InvoiceList = () => {
+const AdminInvoiceList = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -81,4 +81,4 @@ const InvoiceList = () => {
   );
 };
 
-export default InvoiceList;
+export default AdminInvoiceList;

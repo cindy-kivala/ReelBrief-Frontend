@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { fetchInvoices } from "@/api/invoiceAPI";
 import { Link } from "react-router-dom";
 
-const InvoiceList = () => {
+const FreelancerInvoiceList = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -110,4 +110,4 @@ const InvoiceList = () => {
   );
 };
 
-export default InvoiceList;
+export default FreelancerInvoiceList;

@@ -10,7 +10,7 @@ import { fetchInvoiceById } from "@/api/invoiceAPI";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 
-const InvoiceDetail = () => {
+const AdminInvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
@@ -72,4 +72,4 @@ const InvoiceDetail = () => {
   );
 };
 
-export default InvoiceDetail;
+export default AdminInvoiceDetail;

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchInvoiceById, payInvoice } from "@/api/invoiceAPI";
 
-const InvoiceDetails = () => {
+const ClientInvoiceDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
@@ -97,4 +97,4 @@ const InvoiceDetails = () => {
   );
 };
 
-export default InvoiceDetails;
+export default ClientInvoiceDetails;

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { createInvoice } from "@/api/invoiceAPI";
 import { useNavigate } from "react-router-dom";
 
-const CreateInvoice = () => {
+const FreelancerCreateInvoice = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     project_id: "",
@@ -101,4 +101,4 @@ const CreateInvoice = () => {
   );
 };
 
-export default CreateInvoice;
+export default FreelancerCreateInvoice;
