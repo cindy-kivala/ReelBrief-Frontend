@@ -43,3 +43,12 @@ export const fetchNotifications = async () => {
   const response = await axiosClient.get(`${BASE_URL}/notifications`);
   return response.data;
 };
+
+/**
+ * Fetch revenue data for admin dashboard
+ * @returns {Promise<Object[]>} Monthly revenue data
+ */
+export const fetchRevenueData = async () => {
+  const response = await axiosClient.get(`/dashboard/revenue`);
+  return response.data;
+};
