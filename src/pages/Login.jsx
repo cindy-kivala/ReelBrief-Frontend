@@ -5,17 +5,34 @@
  */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return;
-    login(form);
+
+    if (!form.email || !form.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    const user = await login(form);
+    setLoading(false);
+
+    if (user) {
+      toast.success(`Welcome back, ${user.first_name || "User"}!`);
+      navigate("/"); // ✅ redirect after successful login
+    } else {
+      toast.error("Invalid email or password");
+    }
   };
 
   return (
@@ -81,8 +98,12 @@ export default function Login() {
           </div>
 
           {/* Sign In Button */}
-          <button type="submit" className="btn-primary w-full">
-            Sign In
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
@@ -106,10 +127,18 @@ export default function Login() {
         <div className="demo-box mt-8 border rounded-md p-4 text-sm bg-gray-50">
           <p className="font-semibold mb-2">Demo Test Accounts:</p>
           <ul className="space-y-1 text-gray-700">
-            <li>• Client: <code>client@test.com</code></li>
-            <li>• Freelancer: <code>freelancer@test.com</code></li>
-            <li>• Admin: <code>admin@test.com</code></li>
-            <li>Password: <code>any password</code></li>
+            <li>
+              • Client: <code>client@test.com</code>
+            </li>
+            <li>
+              • Freelancer: <code>freelancer@test.com</code>
+            </li>
+            <li>
+              • Admin: <code>admin@test.com</code>
+            </li>
+            <li>
+              Password: <code>any password</code>
+            </li>
           </ul>
         </div>
       </div>

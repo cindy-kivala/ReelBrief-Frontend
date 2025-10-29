@@ -1,41 +1,55 @@
 /**
  * AppRouter.jsx
- * Combined routing with BrowserRouter and ProtectedRoute role logic
+ * Owner: Ryan
+ * Description: Handles all routing for ReelBrief frontend with role-based protection.
  */
 
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import PropTypes from "prop-types";
+import { useAuth } from "../context/AuthContext";
 
-// Public Pages
+// -------------------- Public Pages --------------------
 import LandingPage from "../pages/LandingPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import VerifyEmail from "../pages/VerifyEmail"; // ✅ Added route
 
-// Shared Protected Pages
-import Profile from "../pages/Profile";
-import ProjectDetail from "../pages/ProjectDetail";
-
-// Admin Pages
+// -------------------- Admin Pages --------------------
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import FreelancerVetting from "../pages/admin/FreelancerVetting";
 import EscrowManagement from "../pages/admin/EscrowManagement";
+import AdminInvoiceDetail from "../pages/admin/Invoices/InvoiceDetail";
+import AdminInvoiceList from "../pages/admin/Invoices/InvoiceList";
 
-// Client Pages
-import ClientDashboard from "../pages/client/ClientDashboard";
-import ClientProjects from "../pages/client/ClientProjects";
-
-// Freelancer Pages
+// -------------------- Freelancer Pages --------------------
 import FreelancerDashboard from "../pages/freelancer/FreelancerDashboard";
 import FreelancerProjects from "../pages/freelancer/FreelancerProjects";
+import FreelancerCreateInvoice from "../pages/freelancer/Invoices/CreateInvoice";
+import FreelancerInvoiceDetail from "../pages/freelancer/Invoices/InvoiceDetail";
+import FreelancerInvoiceList from "../pages/freelancer/Invoices/InvoiceList";
+
+// -------------------- Client Pages --------------------
+import ClientDashboard from "../pages/client/ClientDashboard";
+import ClientProjects from "../pages/client/ClientProjects";
+import ClientInvoiceDetail from "../pages/client/Invoices/InvoiceDetail";
+import ClientInvoiceList from "../pages/client/Invoices/InvoiceList";
+import ClientInvoicePay from "../pages/client/Invoices/InvoicePayment";
+
+// -------------------- Shared Protected Pages --------------------
+import Profile from "../pages/Profile";
+import ProjectDetail from "../pages/ProjectDetail";
 
 // -------------------- Protected Route --------------------
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading)
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -50,35 +64,19 @@ ProtectedRoute.propTypes = {
   allowedRoles: PropTypes.array,
 };
 
-// -------------------- App Router --------------------
-export default function AppRouter() {
+// -------------------- Router --------------------
+function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* ---------- Public Routes ---------- */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* ✅ Email verification route */}
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
-        {/* Shared Protected Routes */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:id"
-          element={
-            <ProtectedRoute>
-              <ProjectDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin Routes */}
+        {/* ---------- Admin Routes ---------- */}
         <Route
           path="/admin/dashboard"
           element={
@@ -103,26 +101,24 @@ export default function AppRouter() {
             </ProtectedRoute>
           }
         />
-
-        {/* Client Routes */}
         <Route
-          path="/client/dashboard"
+          path="/admin/invoices"
           element={
-            <ProtectedRoute allowedRoles={["client"]}>
-              <ClientDashboard />
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminInvoiceList />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/client/projects"
+          path="/admin/invoices/:id"
           element={
-            <ProtectedRoute allowedRoles={["client"]}>
-              <ClientProjects />
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminInvoiceDetail />
             </ProtectedRoute>
           }
         />
 
-        {/* Freelancer Routes */}
+        {/* ---------- Freelancer Routes ---------- */}
         <Route
           path="/freelancer/dashboard"
           element={
@@ -139,10 +135,96 @@ export default function AppRouter() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/freelancer/invoices"
+          element={
+            <ProtectedRoute allowedRoles={["freelancer"]}>
+              <FreelancerInvoiceList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/freelancer/invoices/create"
+          element={
+            <ProtectedRoute allowedRoles={["freelancer"]}>
+              <FreelancerCreateInvoice />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/freelancer/invoices/:id"
+          element={
+            <ProtectedRoute allowedRoles={["freelancer"]}>
+              <FreelancerInvoiceDetail />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Fallback */}
+        {/* ---------- Client Routes ---------- */}
+        <Route
+          path="/client/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/projects"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientProjects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/invoices"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientInvoiceList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/invoices/:id"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientInvoiceDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/invoices/:id/pay"
+          element={
+            <ProtectedRoute allowedRoles={["client"]}>
+              <ClientInvoicePay />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ---------- Shared Protected Routes ---------- */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "freelancer", "client"]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "freelancer", "client"]}>
+              <ProjectDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ---------- Fallback ---------- */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default AppRouter;

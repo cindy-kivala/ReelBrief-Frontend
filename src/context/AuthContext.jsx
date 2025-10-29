@@ -3,7 +3,6 @@
  * Owner: Ryan
  * Description: Provides authentication context and state management for ReelBrief frontend.
  */
-
 import { createContext, useContext, useState, useEffect } from "react";
 import authAPI from "../api/authAPI";
 import toast from "react-hot-toast";
@@ -14,15 +13,14 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // -------------------- Auto-fetch user if logged in --------------------
+  // Auto-fetch user if access token exists
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {
       setLoading(false);
       return;
     }
-
-    const fetchUser = async () => {
+    (async () => {
       try {
         const data = await authAPI.getCurrentUser();
         setUser(data);
@@ -32,58 +30,51 @@ export function AuthProvider({ children }) {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchUser();
+    })();
   }, []);
 
-  // -------------------- LOGIN --------------------
+  // LOGIN
   const login = async (credentials) => {
     try {
-      const { user } = await authAPI.login(credentials);
+      const { user, access_token } = await authAPI.login(credentials);
       setUser(user);
+      localStorage.setItem("accessToken", access_token);
       toast.success(`Welcome back, ${user.first_name || "User"}!`);
-
-      // ✅ No navigation logic here — handled in the component (e.g., LoginForm)
       return user;
     } catch (err) {
-      toast.error(err.response?.data?.error || "Login failed");
+      toast.error(err?.response?.data?.error || "Login failed");
       return null;
     }
   };
 
-  // -------------------- REGISTER --------------------
-  const register = async (data) => {
+  // REGISTER (no auto-login; user must verify first)
+  const register = async (formData) => {
     try {
-      await authAPI.register(data);
-      toast.success("Account created successfully!");
-
-      // ✅ Return email & password so LoginForm can auto-login
-      return { email: data.get("email"), password: data.get("password") };
+      const res = await authAPI.register(formData);
+      toast.success("Account created! Check your email to verify.");
+      return res; // contains dev_verify_url & verification_token
     } catch (err) {
-      toast.error(err.response?.data?.error || "Registration failed");
+      toast.error(err?.response?.data?.error || "Registration failed");
       return null;
     }
   };
 
-  // -------------------- LOGOUT --------------------
   const logout = async () => {
     await authAPI.logout();
     setUser(null);
     toast.success("Logged out successfully");
   };
 
-  // -------------------- Context --------------------
   const value = {
     user,
     loading,
-    login,
-    register,
-    logout,
     isAuthenticated: !!user,
     isAdmin: user?.role === "admin",
     isFreelancer: user?.role === "freelancer",
     isClient: user?.role === "client",
+    login,
+    register,
+    logout,
   };
 
   return (
@@ -94,8 +85,7 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context)
-    throw new Error("useAuth must be used within an AuthProvider");
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
 }

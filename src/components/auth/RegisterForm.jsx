@@ -1,17 +1,17 @@
 /**
  * RegisterForm.jsx
  * Owner: Ryan
- * Description: Handles user registration with conditional CV upload for freelancers.
+ * Description: Handles user registration with conditional CV upload. No auto-login.
  */
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 
 export default function RegisterForm() {
-  const { register, login } = useAuth(); // ✅ we’ll use both
+  const { register } = useAuth();
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -21,53 +21,41 @@ export default function RegisterForm() {
     cv: null,
   });
 
-  // -------------------- File Upload Handler --------------------
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setForm({ ...form, cv: file });
   };
 
-  // -------------------- Submit Handler --------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password)
-      return toast.error("Email and password required");
+    if (!form.email || !form.password) return toast.error("Email and password required");
 
-    // Prepare form data (supports file upload)
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value !== null) formData.append(key, value);
-    });
+    Object.entries(form).forEach(([k, v]) => v !== null && formData.append(k, v));
 
-    // ✅ Register user
-    const creds = await register(formData);
-    if (!creds) return; // stop if registration failed
+    const res = await register(formData);
+    if (!res) return;
 
-    // ✅ Auto-login right after signup
-    const user = await login({
-      email: creds.email,
-      password: creds.password,
-    });
-    if (!user) return;
+    // If backend returned a dev verify token, go straight to verify page
+    if (res.verification_token) {
+      toast("Verifying now (dev)…");
+      navigate(`/verify-email/${res.verification_token}`);
+      return;
+    }
 
-    // ✅ Redirect by role
-    if (user.role === "admin") navigate("/admin/dashboard");
-    else if (user.role === "freelancer") navigate("/freelancer/dashboard");
-    else navigate("/client/dashboard");
+    // Otherwise, fall back to email link instructions
+    toast.success("Check your email for a verification link.");
   };
 
-  // -------------------- UI --------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 mx-auto rounded-md bg-blue-700 flex items-center justify-center">
             <span className="text-white font-bold text-lg">RB</span>
           </div>
         </div>
 
-        {/* Header */}
         <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">
           Create Your Account
         </h2>
@@ -75,16 +63,9 @@ export default function RegisterForm() {
           Join ReelBrief as a client or freelancer
         </p>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          encType="multipart/form-data"
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium">
-              First Name
-            </label>
+            <label className="block text-gray-700 font-medium">First Name</label>
             <input
               type="text"
               value={form.first_name}
@@ -139,12 +120,9 @@ export default function RegisterForm() {
             </select>
           </div>
 
-          {/* Conditional CV Upload */}
           {form.role === "freelancer" && (
             <div>
-              <label className="block text-gray-700 font-medium">
-                Upload Your CV
-              </label>
+              <label className="block text-gray-700 font-medium">Upload Your CV</label>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
@@ -165,7 +143,6 @@ export default function RegisterForm() {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-6">
           Already have an account?{" "}
           <a href="/login" className="text-blue-600 hover:underline">
