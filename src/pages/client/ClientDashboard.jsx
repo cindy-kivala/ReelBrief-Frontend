@@ -1,155 +1,126 @@
-/**
- * ClientDashboard.jsx
- * Owner: Caleb
- * Description: Dashboard for clients to view projects, deliverables, and payments.
- */
+import React, { useEffect, useState } from "react";
+import { fetchDashboardStats, fetchRecentProjects, approveProject } from "@/api/dashboardAPI";
+import { Briefcase, Clock, CheckCircle, DollarSign, ThumbsUp, RefreshCcw } from "lucide-react";
 
-import React from "react";
+const ClientDashboard = () => {
+  const [stats, setStats] = useState({});
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-function ClientDashboard() {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsData, projectsData] = await Promise.all([
+          fetchDashboardStats(),   // → { active_projects, pending_approval, completed_projects, total_spent }
+          fetchRecentProjects(),   // → projects with title, freelancer_name, budget, progress, status
+        ]);
+        setStats(statsData);
+        setProjects(projectsData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const handleApprove = async (projectId) => {
+    try {
+      await approveProject(projectId); // Call backend endpoint
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: "completed" } : p));
+    } catch (err) {
+      console.error("Failed to approve project:", err);
+    }
+  };
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const name = user.first_name || "Client";
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+
+  const statCards = [
+    { label: "Active Projects", value: stats.active_projects || 0, icon: Briefcase, color: "blue" },
+    { label: "Pending Approval", value: stats.pending_approval || 0, icon: Clock, color: "yellow" },
+    { label: "Completed", value: stats.completed_projects || 0, icon: CheckCircle, color: "green" },
+    { label: "Total Spent", value: `$${stats.total_spent || 0}`, icon: DollarSign, color: "indigo" },
+  ];
+
   return (
     <div className="bg-gray-100 min-h-screen p-6 md:ml-64 mt-16">
-
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row justify-between mb-8">
         <div>
-          <h1 className="font-bold text-3xl text-gray-800">Welcome back, John </h1>
-          <p className="text-gray-600 mt-1">
-            Here's what's happening with your projects
-          </p>
+          <h1 className="text-3xl font-bold">Welcome back, {name}</h1>
+          <p className="text-gray-600">Manage your projects, payments, and approvals here</p>
         </div>
-        <button className="mt-4 sm:mt-0 bg-blue-800 px-4 py-2 rounded-lg text-white font-medium hover:bg-blue-600 transition">
+        <button className="mt-4 sm:mt-0 bg-blue-800 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
           + New Project
         </button>
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { icon: "fi fi-rr-folder-open", label: "Active Projects", value: "3" },
-          { icon: "fi fi-rr-clock-three", label: "In Review", value: "1" },
-          { icon: "fi fi-rs-check-circle", label: "Completed", value: "5" },
-          { icon: "fi fi-rr-dollar", label: "Total Spent", value: "$24.5K" },
-        ].map((card, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-xl border border-gray-300 p-5 text-center"
-          >
-            <div className="flex flex-col items-center gap-2">
-              <i className={`${card.icon} text-2xl text-blue-700`}></i>
-              <p className="text-2xl font-bold text-gray-700">{card.value}</p>
-              <h3 className="text-sm text-gray-600 font-medium">{card.label}</h3>
-            </div>
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {statCards.map((card, i) => (
+          <div key={i} className="bg-white p-5 rounded-xl border text-center">
+            <card.icon className={`mx-auto text-3xl text-${card.color}-600 mb-2`} />
+            <p className="text-2xl font-bold">{card.value}</p>
+            <p className="text-sm text-gray-600">{card.label}</p>
           </div>
         ))}
       </section>
 
-      <section className="mt-10 bg-white p-6 rounded-xl border border-gray-300">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-bold text-2xl text-gray-800">Recent Projects</h1>
-          <a
-            href="#"
-            className=" text-blue-500 px-4 py-2 rounded-lg hover:bg-red-400 hover:text-white transition"
-          >
-            View All
-          </a>
+      <section className="bg-white p-6 rounded-xl border">
+        <div className="flex justify-between mb-6">
+          <h2 className="text-2xl font-bold">Recent Projects</h2>
+          <a href="/projects" className="text-blue-500 hover:underline">View All</a>
         </div>
 
-        <div className="flex flex-col gap-5">
-          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
-            <div className="flex flex-wrap items-center justify-between mb-2">
-              <h2 className="font-semibold text-lg text-gray-800">
-                Logo Design for TechCo
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="bg-blue-700 text-white text-sm px-3 py-1 rounded-xl">
-                  In Progress
+        <div className="space-y-4">
+          {projects.map(p => (
+            <div key={p.id} className="border p-4 rounded-lg hover:border-blue-400">
+              <div className="flex justify-between mb-2">
+                <h3 className="font-semibold text-lg">{p.title}</h3>
+                <span className={`px-3 py-1 rounded text-white text-sm ${
+                  p.status === "completed" ? "bg-green-600" :
+                  p.status === "pending_approval" ? "bg-yellow-500" :
+                  "bg-blue-700"
+                }`}>
+                  {p.status.replace("_", " ")}
                 </span>
-                <a
-                  href="#"
-                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
-                >
-                  View Details
-                </a>
               </div>
-            </div>
-            <p className="text-gray-600 text-sm">Freelancer: Sarah Johnson</p>
-            <p className="text-gray-600 text-sm">$1500 • Due Apr 25</p>
-
-            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: "60%" }}
-              ></div>
-            </div>
-            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
-              60% Complete
-            </p>
-          </div>
-
-          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
-            <div className="flex flex-wrap items-center justify-between mb-2">
-              <h2 className="font-semibold text-lg text-gray-800">
-                Website Copy
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-xl">
-                  Needs Review
-                </span>
-                <a
-                  href="#"
-                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
-                >
-                  View Details
-                </a>
+              <p className="text-sm text-gray-600">Freelancer: {p.freelancer_name}</p>
+              <p className="text-sm text-gray-600">${p.budget} • Due {new Date(p.deadline).toLocaleDateString()}</p>
+              <div className="mt-2 bg-gray-200 h-2 rounded-full">
+                <div
+                  className={`h-2 rounded-full ${
+                    p.status === "completed" ? "bg-green-600" :
+                    p.status === "pending_approval" ? "bg-yellow-500" : "bg-blue-700"
+                  }`}
+                  style={{ width: `${p.progress}%` }}
+                />
               </div>
-            </div>
-            <p className="text-gray-600 text-sm">Freelancer: Michael Chen</p>
-            <p className="text-gray-600 text-sm">$2200 • Due Apr 25</p>
+              <p className="text-right text-xs text-gray-500">{p.progress}% Complete</p>
 
-            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-yellow-500 h-2.5 rounded-full"
-                style={{ width: "40%" }}
-              ></div>
+              {p.status === "pending_approval" && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => handleApprove(p.id)}
+                    className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-500 text-sm"
+                  >
+                    <ThumbsUp className="w-4 h-4" /> Approve
+                  </button>
+                  <button
+                    className="flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-400 text-sm"
+                  >
+                    <RefreshCcw className="w-4 h-4" /> Request Revision
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
-              40% Complete
-            </p>
-          </div>
-
-          <div className="border border-gray-300 rounded-xl p-4 hover:border-blue-400">
-            <div className="flex flex-wrap items-center justify-between mb-2">
-              <h2 className="font-semibold text-lg text-gray-800">
-                Video Editing
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-xl">
-                  Completed
-                </span>
-                <a
-                  href="#"
-                  className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
-                >
-                  View Details
-                </a>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm">Freelancer: Emma Davis</p>
-            <p className="text-gray-600 text-sm">$3500 • Due Apr 25</p>
-
-            <div className="mt-3 w-2/3 bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-green-600 h-2.5 rounded-full"
-                style={{ width: "100%" }}
-              ></div>
-            </div>
-            <p className="text-right text-xs text-gray-500 mt-1 w-2/3">
-              100% Complete
-            </p>
-          </div>
+          ))}
         </div>
       </section>
     </div>
   );
-}
+};
 
 export default ClientDashboard;

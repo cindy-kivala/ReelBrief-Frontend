@@ -1,9 +1,4 @@
-/**
- * RevenueChart.jsx
- * Owner: Caleb
- * Description: Visual chart for displaying revenue over time.
- */
-
+// src/components/dashboard/RevenueChart.jsx
 import React, { useEffect, useState } from "react";
 import {
   LineChart,

@@ -6,7 +6,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils"; // Optional helper if you’re using shadcn-ui
+// import { cn } from "@/lib/utils";
 
 const StatCard = ({ title, value, icon: Icon, color = "indigo", className }) => {
   return (

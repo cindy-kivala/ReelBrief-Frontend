@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchInvoiceById } from "@/api/invoiceAPI";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import axios from "axios";
 
 const AdminInvoiceDetail = () => {

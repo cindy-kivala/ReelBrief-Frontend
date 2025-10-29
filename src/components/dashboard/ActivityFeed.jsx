@@ -1,39 +1,21 @@
-/**
- * ActivityFeed.jsx
- * Owner: Caleb
- * Description: Displays a timeline of recent actions (audit trail).
- */
+// src/components/dashboard/ActivityFeed.jsx
 import React, { useEffect, useState } from "react";
-import { Clock, User, CheckCircle, AlertCircle } from "lucide-react";
-import activityAPI from "../../api/activityAPI";
+import { Clock } from "lucide-react";
+import axiosClient from "@/api/axiosClient";
 
 const ActivityFeed = () => {
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    const dummy = [
-      {
-        id: 1,
-        action: "Admin Caleb approved freelancer John Doe",
-        created_at: "2025-10-23T09:30:00Z",
-      },
-      {
-        id: 2,
-        action: "Client Jane funded project 'Logo Design' escrow",
-        created_at: "2025-10-23T09:00:00Z",
-      },
-      {
-        id: 3,
-        action: "Freelancer Alex submitted project deliverables",
-        created_at: "2025-10-22T21:30:00Z",
-      },
-      {
-        id: 4,
-        action: "Review added by client Peter (⭐4.5)",
-        created_at: "2025-10-22T18:10:00Z",
-      },
-    ];
-    setActivities(dummy);
+    const fetchActivities = async () => {
+      try {
+        const response = await axiosClient.get("/api/dashboard/activity");
+        setActivities(response.data.recent_activity || []);
+      } catch (error) {
+        console.error("Failed to load activities:", error);
+      }
+    };
+    fetchActivities();
   }, []);
 
   return (
@@ -52,7 +34,7 @@ const ActivityFeed = () => {
             </div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 text-sm">
-                {item.action}
+                {item.action} by {item.user_name}
               </p>
               <span className="text-xs text-gray-400">
                 {new Date(item.created_at).toLocaleString()}
