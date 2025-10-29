@@ -6,18 +6,15 @@
 
 import axiosClient from "./axiosClient";
 
-// -------------------- Helper: Token Storage --------------------
 const TOKEN_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
 
+// -------------------- Token Helpers --------------------
 const storeTokens = (access, refresh) => {
   if (access) localStorage.setItem(TOKEN_KEY, access);
   if (refresh) localStorage.setItem(REFRESH_KEY, refresh);
   axiosClient.defaults.headers.Authorization = `Bearer ${access}`;
 };
-
-const getAccessToken = () => localStorage.getItem(TOKEN_KEY);
-const getRefreshToken = () => localStorage.getItem(REFRESH_KEY);
 
 const clearTokens = () => {
   localStorage.removeItem(TOKEN_KEY);
@@ -25,64 +22,36 @@ const clearTokens = () => {
   delete axiosClient.defaults.headers.Authorization;
 };
 
-// -------------------- API Endpoints --------------------
+// -------------------- Auth API --------------------
 const authAPI = {
-  /**
-   * Register a new user
-   * @param {Object} data {name, email, password, role, etc.}
-   */
-  register: (data) => axiosClient.post("/auth/register", data),
-
-  /**
-   * Login user and store tokens
-   * @param {Object} credentials {email, password}
-   */
-  login: async (credentials) => {
-    const res = await axiosClient.post("/auth/login", credentials);
-    const { access_token, refresh_token, user } = res.data;
-
-    if (access_token) storeTokens(access_token, refresh_token);
-    return user || res.data;
-  },
-
-  /**
-   * Refresh expired access token
-   */
-  refreshToken: async () => {
-    const refresh = getRefreshToken();
-    if (!refresh) throw new Error("No refresh token found");
-
-    const res = await axiosClient.post("/auth/refresh", { refresh_token: refresh });
-    const { access_token } = res.data;
-
-    if (access_token) storeTokens(access_token);
-    return access_token;
-  },
-
-  /**
-   * Fetch currently authenticated user
-   */
-  getCurrentUser: async () => {
-    const res = await axiosClient.get("/auth/me");
+  // Register (supports file upload)
+  register: async (data) => {
+    const res = await axiosClient.post("/api/auth/register", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return res.data;
   },
 
-  /**
-   * Logout and clear local storage
-   */
-  logout: () => {
+  // Login user
+  login: async (credentials) => {
+    const res = await axiosClient.post("/api/auth/login", credentials);
+    const { access_token, refresh_token, user } = res.data;
+
+    if (access_token) storeTokens(access_token, refresh_token);
+    return { user, access_token };
+  },
+
+  // Get current user info
+  getCurrentUser: async () => {
+    const res = await axiosClient.get("/api/auth/me");
+    return res.data;
+  },
+
+  // Logout and clear session
+  logout: async () => {
     clearTokens();
     return Promise.resolve();
   },
-
-  /**
-   * Password reset flow
-   */
-  requestPasswordReset: (email) =>
-    axiosClient.post("/auth/reset-password-request", { email }),
-
-  resetPassword: (token, newPassword) =>
-    axiosClient.post("/auth/reset-password", { token, password: newPassword }),
 };
 
 export default authAPI;

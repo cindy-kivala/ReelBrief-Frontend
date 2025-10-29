@@ -8,17 +8,15 @@ import { createContext, useContext, useState, useEffect } from "react";
 import authAPI from "../api/authAPI";
 import toast from "react-hot-toast";
 
-// -------------------- Create Context --------------------
 const AuthContext = createContext(null);
 
-// -------------------- Provider --------------------
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // -------------------- Check Current User --------------------
+  // -------------------- Auto-fetch user if logged in --------------------
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       setLoading(false);
       return;
@@ -26,10 +24,10 @@ export function AuthProvider({ children }) {
 
     const fetchUser = async () => {
       try {
-        const res = await authAPI.getCurrentUser();
-        setUser(res.data);
+        const data = await authAPI.getCurrentUser();
+        setUser(data);
       } catch {
-        localStorage.removeItem("token");
+        localStorage.removeItem("accessToken");
         setUser(null);
       } finally {
         setLoading(false);
@@ -39,38 +37,43 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, []);
 
-  // -------------------- Auth Actions --------------------
+  // -------------------- LOGIN --------------------
   const login = async (credentials) => {
     try {
-      const res = await authAPI.login(credentials);
-      localStorage.setItem("token", res.data.access_token);
-      setUser(res.data.user);
-      toast.success(`Welcome back, ${res.data.user.first_name || "User"}!`);
+      const { user } = await authAPI.login(credentials);
+      setUser(user);
+      toast.success(`Welcome back, ${user.first_name || "User"}!`);
 
-      // ✅ Return user for redirect
-      return res.data.user;
+      // ✅ No navigation logic here — handled in the component (e.g., LoginForm)
+      return user;
     } catch (err) {
       toast.error(err.response?.data?.error || "Login failed");
-      return null; // ✅ So we can check in LoginForm
+      return null;
     }
   };
 
+  // -------------------- REGISTER --------------------
   const register = async (data) => {
     try {
       await authAPI.register(data);
-      toast.success("Account created! Check your email to verify.");
+      toast.success("Account created successfully!");
+
+      // ✅ Return email & password so LoginForm can auto-login
+      return { email: data.get("email"), password: data.get("password") };
     } catch (err) {
       toast.error(err.response?.data?.error || "Registration failed");
+      return null;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
+  // -------------------- LOGOUT --------------------
+  const logout = async () => {
+    await authAPI.logout();
     setUser(null);
     toast.success("Logged out successfully");
   };
 
-  // -------------------- Context Value --------------------
+  // -------------------- Context --------------------
   const value = {
     user,
     loading,
@@ -90,11 +93,9 @@ export function AuthProvider({ children }) {
   );
 }
 
-// -------------------- Hook --------------------
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (!context)
     throw new Error("useAuth must be used within an AuthProvider");
-  }
   return context;
 }
