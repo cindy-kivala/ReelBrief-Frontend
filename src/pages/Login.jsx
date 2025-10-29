@@ -5,7 +5,6 @@
  */
 
 import React from 'react';
-import ProjectList from '../pages/ProjectList';
 // TODO: Import and render LoginForm component
 // - Handle form submission
 // - Redirect on successful login

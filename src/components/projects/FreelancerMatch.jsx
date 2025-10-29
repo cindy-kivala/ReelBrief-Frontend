@@ -25,7 +25,7 @@ export default function FreelancerMatch({ project, onClose }) {
     );
   }
 
-  // --- Fetch matched freelancers ---
+  // Fetch matched freelancers 
   useEffect(() => {
     const loadFreelancers = async () => {
       try {
@@ -50,7 +50,7 @@ export default function FreelancerMatch({ project, onClose }) {
     loadFreelancers();
   }, [project]);
 
-  // --- Handle shortlist toggle ---
+  // Handle shortlist toggle 
   const toggleShortlist = (freelancerId) => {
     setShortlisted((prev) =>
       prev.includes(freelancerId)
@@ -59,7 +59,7 @@ export default function FreelancerMatch({ project, onClose }) {
     );
   };
 
-  // --- Assign freelancer to project ---
+  //  Assign freelancer to project
   const handleAssign = async (freelancer) => {
     if (!freelancer || !project) return;
 
@@ -76,7 +76,7 @@ export default function FreelancerMatch({ project, onClose }) {
     }
   };
 
-  // --- UI ---
+  // UI 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-5xl p-6 rounded-xl shadow-lg overflow-y-auto max-h-[90vh]">
@@ -88,8 +88,7 @@ export default function FreelancerMatch({ project, onClose }) {
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 transition text-lg"
-          >
+            className="text-gray-500 hover:text-gray-800 transition text-lg">
             ✕
           </button>
         </div>
@@ -137,8 +136,7 @@ export default function FreelancerMatch({ project, onClose }) {
                   {f?.freelancer_skills?.map((s) => (
                     <span
                       key={s?.id || Math.random()}
-                      className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700"
-                    >
+                      className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
                       {s?.skill_name || "Skill"} • {s?.proficiency || "N/A"}
                     </span>
                   ))}
@@ -160,8 +158,7 @@ export default function FreelancerMatch({ project, onClose }) {
                   <button
                     onClick={() => handleAssign(f)}
                     disabled={assigning === f?.id}
-                    className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 disabled:bg-gray-300"
-                  >
+                    className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 disabled:bg-gray-300">
                     {assigning === f?.id ? "Assigning..." : "Assign"}
                   </button>
                 </div>
