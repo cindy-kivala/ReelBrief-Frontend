@@ -1,16 +1,25 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('access_token'); 
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : ''
+  };
+};
+
 // PRODUCTION FUNCTIONS
 // GET /api/deliverables/:id
 const prodFetchDeliverableById = async (id) => {
   const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-    }
+    headers: getAuthHeaders()
   });
-  if (!response.ok) throw new Error('Failed to fetch deliverable');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch deliverable' }));
+    throw new Error(error.error || 'Failed to fetch deliverable');
+  }
   return await response.json();
 };
 
@@ -18,12 +27,13 @@ const prodFetchDeliverableById = async (id) => {
 const prodApproveDeliverable = async (id) => {
   const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/approve`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-    }
+    headers: getAuthHeaders()
   });
-  if (!response.ok) throw new Error('Failed to approve deliverable');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to approve deliverable' }));
+    throw new Error(error.error || 'Failed to approve deliverable');
+  }
+  
   return await response.json();
 };
 
@@ -31,12 +41,13 @@ const prodApproveDeliverable = async (id) => {
 const prodGetDeliverableVersions = async (id) => {
   const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/versions`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
-    }
+    headers: getAuthHeaders()
   });
-  if (!response.ok) throw new Error('Failed to fetch versions');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to fetch versions' }));
+    throw new Error(error.error || 'Failed to fetch versions');
+  }
+
   return await response.json();
 };
 
@@ -46,16 +57,25 @@ const prodUploadDeliverable = async (projectId, formData) => {
   if (!formData.has('project_id')) {
     formData.append('project_id', projectId);
   }
-  
+
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/deliverables`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      'Authorization': `Bearer ${token}`
       // Remember== Don't set Content-Type for FormData - browser sets it automatically with boundary
     },
     body: formData
   });
-  if (!response.ok) throw new Error('Failed to upload deliverable');
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Failed to upload deliverable' }));
+    throw new Error(error.error || 'Failed to upload deliverable');
+  }
+  
   return await response.json();
 };
 

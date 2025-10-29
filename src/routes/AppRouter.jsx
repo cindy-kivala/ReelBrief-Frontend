@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PropTypes from 'prop-types';
 
@@ -16,6 +16,7 @@ import EscrowManagement from '../pages/admin/EscrowManagement';
 // Protected Pages - Freelancer
 import FreelancerDashboard from '../pages/freelancer/FreelancerDashboard';
 import FreelancerProjects from '../pages/freelancer/FreelancerProjects';
+import VersionCompare from '../components/deliverables/VersionCompare';
 
 // Protected Pages - Client
 import ClientDashboard from '../pages/client/ClientDashboard';
@@ -35,10 +36,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
+
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+    console.log('Access denied. User role:', user?.role, 'Allowed:', allowedRoles);
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -50,7 +54,34 @@ ProtectedRoute.propTypes = {
   allowedRoles: PropTypes.array,
 };
 
+function VersionCompareWrapper() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
 
+  // Validate projectId
+  if (!projectId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">No project ID provided</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <VersionCompare 
+      projectId={projectId}
+      onBack={() => navigate(-1)}
+    />
+  );
+}
 
 function AppRouter() {
   const { user } = useAuth();
@@ -106,6 +137,7 @@ function AppRouter() {
         }
       />
 
+
       {/* Client Routes */}
       <Route
         path="/client-dashboard"
@@ -133,6 +165,16 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/projects/:projectId/versions"
+        element={
+          <ProtectedRoute>
+            <VersionCompareWrapper />
+          </ProtectedRoute>
+        }
+      />
+
 
       <Route
         path="/deliverables/:id"

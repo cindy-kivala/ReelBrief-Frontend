@@ -1,3 +1,8 @@
+/**
+ * axiosClient.js
+ * Description: Axios instance with interceptors for API requests
+ */
+
 import axios from 'axios';
 
 const axiosClient = axios.create({
@@ -7,12 +12,17 @@ const axiosClient = axios.create({
   },
 });
 
+const TOKEN_KEY = 'access_token'
+
 // Request interceptor - Add auth token
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Auth token attached to request'); // Debug log
+    } else {
+      console.warn('No auth token found'); // Debug log
     }
     return config;
   },
@@ -23,11 +33,17 @@ axiosClient.interceptors.request.use(
 
 // Response interceptor - Handle errors
 axiosClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', response.config.url, response.status); // Debug log
+    return response;
+  },
   (error) => {
+    console.error('API Error:', error.config?.url, error.response?.status);
+
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('access_token');
+      console.warn('Unauthorized - redirecting to login');
+      localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem('user');
       window.location.href = '/login';
     }

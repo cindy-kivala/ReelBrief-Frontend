@@ -1,48 +1,36 @@
-// // /**
-// //  * Login.jsx
-// //  * Owner: Ryan
-// //  * Description: Page for user login.
-
-
-// import React from 'react';
-// //TODO: Import and render LoginForm component
-// // - Handle form submission
-// // - Redirect on successful login
-// // import VersionCompare from '../components/deliverables/VersionCompare';
-// // import FeedbackForm from '../components/deliverables/FeedbackForm';
-// // import CloudinaryUpload from '../components/deliverables/CloudinaryUpload';
-// // // import DeliverableDetail from './DeliverableDetail';
-
-// // function Login() {
-// //   return (
-// //     <div>
-// //       <h1>Login Page</h1>
-// //       {/* <LoginForm /> will go here once implemented */}
-// //       <VersionCompare />
-// //       {/* <DeliverableDetail /> */}
-// //       <FeedbackForm />
-// //       <CloudinaryUpload />
-// //     </div>
-// //   );
-// // }
-
-// // export default Login;
-
-
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      redirectBasedOnRole(user.role);
+    }
+  }, [isAuthenticated, user]);
+
+  const redirectBasedOnRole = (role) => {
+    const roleRoutes = {
+      admin: '/admin-dashboard',
+      client: '/client-dashboard',
+      creator: '/creator-dashboard',
+      freelancer: '/freelancer-dashboard'
+    };
+
+    const route = roleRoutes[role.toLowerCase()] || '/dashboard';
+    console.log('Redirecting to:', route);
+    navigate(route);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,12 +39,17 @@ function Login() {
 
     try {
       // Call the login function from AuthContext
-      await login(formData.email, formData.password);
+      const response = await login(formData.email, formData.password);
       
-      // Redirect based on user role (this will be handled by AuthContext)
-      // The AuthContext will set the user and redirect appropriately
+      console.log('Login successful:', response);
+      
+      // Redirect based on user role
+      if (response?.user?.role) {
+        redirectBasedOnRole(response.user.role);
+      }
       
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message || 'Failed to login');
     } finally {
       setLoading(false);
