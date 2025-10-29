@@ -45,9 +45,13 @@ export function AuthProvider({ children }) {
       const res = await authAPI.login(credentials);
       localStorage.setItem("token", res.data.access_token);
       setUser(res.data.user);
-      toast.success(`Welcome back, ${res.data.user.name || "User"}!`);
+      toast.success(`Welcome back, ${res.data.user.first_name || "User"}!`);
+
+      // ✅ Return user for redirect
+      return res.data.user;
     } catch (err) {
       toast.error(err.response?.data?.error || "Login failed");
+      return null; // ✅ So we can check in LoginForm
     }
   };
 

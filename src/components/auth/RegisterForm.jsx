@@ -10,17 +10,32 @@ export default function RegisterForm() {
     email: "",
     password: "",
     role: "client",
+    cv: null, // ✅ added CV field
   });
+
+  // ✅ handle file input for freelancer CV
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setForm({ ...form, cv: file });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!form.email || !form.password)
       return toast.error("Email and password required");
-    register(form);
+
+    // ✅ use FormData if a file is included
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null) formData.append(key, value);
+    });
+
+    register(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="auth-form">
+    <form onSubmit={handleSubmit} className="auth-form" encType="multipart/form-data">
       <h2 className="form-title">Register</h2>
 
       <div className="form-group">
@@ -74,6 +89,19 @@ export default function RegisterForm() {
           <option value="freelancer">Freelancer</option>
         </select>
       </div>
+
+      {/* ✅ CV upload field only appears when role = freelancer */}
+      {form.role === "freelancer" && (
+        <div className="form-group">
+          <label>Upload CV</label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="form-input"
+            onChange={handleFileChange}
+          />
+        </div>
+      )}
 
       <button type="submit" className="btn-primary">
         Register
