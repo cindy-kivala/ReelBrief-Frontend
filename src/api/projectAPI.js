@@ -4,9 +4,50 @@
  * Description: Handles API requests for project creation, retrieval, updates, and deletion.
  */
 
-// TODO: Implement API functions:
-// - fetchAllProjects()
-// - fetchProjectById(id)
-// - createProject(data)
-// - updateProject(id, data)
-// - deleteProject(id)
+import API from "./axiosClient"; //  shared Axios client setup
+
+//  Fetch all projects 
+export const fetchAllProjects = async (params = {}) => {
+  const response = await API.get("/projects", { params });
+  return response.data;
+};
+
+//Fetch a single project by ID
+export const fetchProjectById = async (id) => {
+  const response = await API.get(`/projects/${id}`);
+  return response.data;
+};
+
+//  Create a new project
+export const createProject = async (data) => {
+  const response = await API.post("/projects", data);
+  return response.data;
+};
+
+// Update an existing project
+export const updateProject = async (id, data) => {
+  const response = await API.patch(`/projects/${id}`, data);
+  return response.data;
+};
+
+//  Delete or cancel a project
+export const deleteProject = async (id) => {
+  const response = await API.delete(`/projects/${id}`);
+  return response.data;
+};
+
+//  Assign freelancer to a project
+export const assignFreelancer = async (id, freelancerId) => {
+  const response = await API.post(`/projects/${id}/assign-freelancer`, {
+    freelancer_id: freelancerId,
+  });
+  return response.data;
+};
+
+//  Mark project as completed
+export const completeProject = async (id) => {
+  const response = await API.post(`/projects/${id}/complete`);
+  return response.data;
+};
+
+export default API;
