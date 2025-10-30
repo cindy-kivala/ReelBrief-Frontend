@@ -1,87 +1,81 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// src/api/deliverableAPI.js
+import axiosClient from './axiosClient';
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('access_token'); 
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : ''
-  };
+class APIError extends Error {
+  constructor(message, status = 0, details = null) {
+    super(message);
+    this.name = 'APIError';
+    this.status = status;
+    this.details = details;
+  }
+}
+
+// GET deliverables by project ID 
+export const fetchDeliverablesByProject = async (projectId) => {
+  try {
+    console.log('Fetching deliverables for project:', projectId);
+    const response = await axiosClient.get(`/api/deliverable/projects/${projectId}`);
+    console.log('Project deliverables fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Fetch project deliverables error:', error);
+    throw new APIError(
+      error.response?.data?.error || 'Failed to fetch project deliverables',
+      error.response?.status,
+      error.response?.data
+    );
+  }
 };
 
-// PRODUCTION FUNCTIONS
-// GET /api/deliverables/:id
-const prodFetchDeliverableById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}`, {
-    method: 'GET',
-    headers: getAuthHeaders()
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch deliverable' }));
-    throw new Error(error.error || 'Failed to fetch deliverable');
+// GET single deliverable by ID
+export const fetchDeliverableById = async (deliverableId) => {
+  try {
+    console.log('Fetching deliverable:', deliverableId);
+    const response = await axiosClient.get(`/api/deliverable/${deliverableId}`);
+    console.log('Deliverable fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Fetch deliverable error:', error);
+    throw new APIError(
+      error.response?.data?.error || 'Failed to fetch deliverable',
+      error.response?.status,
+      error.response?.data
+    );
   }
-  return await response.json();
 };
 
-// POST /api/deliverables/:id/approve
-const prodApproveDeliverable = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/approve`, {
-    method: 'POST',
-    headers: getAuthHeaders()
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to approve deliverable' }));
-    throw new Error(error.error || 'Failed to approve deliverable');
+// POST - Upload new deliverable 
+export const uploadDeliverable = async (formData) => {
+  try {
+    console.log('Uploading deliverable...');
+    const response = await axiosClient.post('/api/deliverable', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    console.log('Deliverable uploaded successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Upload deliverable error:', error);
+    throw new APIError(
+      error.response?.data?.error || 'Failed to upload deliverable',
+      error.response?.status,
+      error.response?.data
+    );
   }
-  
-  return await response.json();
 };
 
-// GET /api/deliverables/:id/versions
-const prodGetDeliverableVersions = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/api/deliverables/${id}/versions`, {
-    method: 'GET',
-    headers: getAuthHeaders()
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to fetch versions' }));
-    throw new Error(error.error || 'Failed to fetch versions');
+// GET freelancer deliverables 
+export const fetchMyDeliverables = async () => {
+  try {
+    console.log('Fetching freelancer deliverables...');
+    const response = await axiosClient.get('/api/deliverable/freelancer/my-deliverables');
+    console.log('Freelancer deliverables fetched:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Fetch freelancer deliverables error:', error);
+    throw new APIError(
+      error.response?.data?.error || 'Failed to fetch deliverables',
+      error.response?.status,
+      error.response?.data
+    );
   }
-
-  return await response.json();
 };
-
-// POST /api/deliverables (with multipart/form-data)
-const prodUploadDeliverable = async (projectId, formData) => {
-  // Ensure project_id is in formData
-  if (!formData.has('project_id')) {
-    formData.append('project_id', projectId);
-  }
-
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    throw new Error('No authentication token found');
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/deliverables`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`
-      // Remember== Don't set Content-Type for FormData - browser sets it automatically with boundary
-    },
-    body: formData
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to upload deliverable' }));
-    throw new Error(error.error || 'Failed to upload deliverable');
-  }
-  
-  return await response.json();
-};
-
-// EXPORTS (Toggle based on environment) 
-export const fetchDeliverableById = prodFetchDeliverableById;
-export const approveDeliverable = prodApproveDeliverable;
-export const getDeliverableVersions = prodGetDeliverableVersions;
-export const uploadDeliverable = prodUploadDeliverable;
-

@@ -1,9 +1,4 @@
-/**
- * CloudinaryUpload.jsx
- * Owner: Cindy
- * Description: Upload component integrated with Cloudinary for file management.
- */
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, File } from 'lucide-react';
 import { uploadDeliverable } from '/src/api/deliverableAPI';
 
@@ -33,7 +28,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word Document',
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = useCallback((e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -63,68 +58,90 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
     } else {
       setPreview(null);
     }
-  };
+  }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-  };
+  }, []);
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Please select a file to upload.');
-      return;
+  // Update handleUpload function
+const handleUpload = async () => {
+  if (!selectedFile) {
+    setError('Please select a file to upload.');
+    return;
+  }
+
+  if (!projectId) {
+    setError('Project ID is required.');
+    return;
+  }
+
+  setUploading(true);
+  setProgress(0);
+  setError(null);
+
+  try {
+    const data = new FormData();
+    data.append('file', selectedFile);
+    data.append('project_id', projectId);
+    data.append('title', formData.title || selectedFile.name);
+    data.append('description', formData.description);
+    data.append('change_notes', formData.change_notes);
+
+    // Simulate progress more realistically
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 80) { // Stop at 80% and let real progress take over
+          clearInterval(progressInterval);
+          return 80;
+        }
+        return prev + 5;
+      });
+    }, 300);
+
+    const response = await uploadDeliverable(data);
+
+    clearInterval(progressInterval);
+    setProgress(100);
+
+    console.log('Upload successful:', response);
+
+    if (onUploadSuccess) {
+      onUploadSuccess(response.deliverable || response);
     }
 
-    setUploading(true);
-    setProgress(0);
-    setError(null);
+    setTimeout(() => {
+      resetForm();
+    }, 1500);
 
-    try {
-      const data = new FormData();
-      data.append('file', selectedFile);
-      data.append('project_id', projectId);
-      data.append('title', formData.title || selectedFile.name);
-      data.append('description', formData.description);
-      data.append('change_notes', formData.change_notes);
-
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      const response = await uploadDeliverable(data);
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      if (onUploadSuccess) {
-        onUploadSuccess(response.deliverable);
-      }
-
-      setTimeout(() => {
-        resetForm();
-      }, 1500);
-
-    } catch (err) {
-      setError(err.error || 'Upload failed. Please try again.');
-      if (onUploadError) {
-        onUploadError(err);
-      }
-    } finally {
-      setUploading(false);
+  } catch (err) {
+    console.error('Upload error:', err);
+    
+    let errorMessage = 'Upload failed. Please try again.';
+    
+    if (err.message?.includes('timed out')) {
+      errorMessage = 'Upload timed out. Please try again with a smaller file or better internet connection.';
+    } else if (err.message?.includes('too large')) {
+      errorMessage = 'File too large. Maximum size is 50MB.';
+    } else if (err.message) {
+      errorMessage = err.message;
     }
-  };
+    
+    setError(errorMessage);
+    
+    if (onUploadError) {
+      onUploadError(err);
+    }
+  } finally {
+    setUploading(false);
+  }
+};
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setSelectedFile(null);
     setPreview(null);
     setFormData({
@@ -137,21 +154,25 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, []);
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatFileSize = useCallback((bytes) => {
+    if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
+  }, []);
+
+  const getFileTypeDisplay = useCallback((file) => {
+    return allowedTypes[file.type] || file.type || 'Unknown file type';
+  }, []);
 
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="bg-white rounded-xl shadow-sm border border-[#D1D5DB] p-8">
         <div className="mb-8">
-          <h2 className="text-2xl text-[#1F2937] mb-2" style={{ fontWeight: 600 }}>
+          <h2 className="text-2xl font-semibold text-[#1F2937] mb-2">
             Upload Deliverable
           </h2>
           <p className="text-sm text-[#4B5563]">Share your work with the team</p>
@@ -177,22 +198,27 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
             {!selectedFile ? (
               <>
                 <Upload className="w-12 h-12 text-[#4B5563] mb-4" />
-                <p className="text-base text-[#1F2937] mb-1" style={{ fontWeight: 600 }}>
+                <p className="text-base font-semibold text-[#1F2937] mb-1">
                   Click to upload file
                 </p>
                 <p className="text-sm text-[#4B5563]">Images, videos, or documents (Max 50MB)</p>
               </>
             ) : (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center text-center">
                 {preview ? (
-                  <img src={preview} alt="Preview" className="h-36 rounded-lg mb-3 object-cover shadow-sm" />
+                  <img 
+                    src={preview} 
+                    alt="Preview" 
+                    className="h-32 rounded-lg mb-3 object-cover shadow-sm"
+                  />
                 ) : (
                   <File className="w-12 h-12 text-[#1E3A8A] mb-3" />
                 )}
-                <p className="text-base text-[#1F2937] mb-1" style={{ fontWeight: 600 }}>
+                <p className="font-semibold text-[#1F2937] mb-1 truncate max-w-xs">
                   {selectedFile.name}
                 </p>
                 <p className="text-sm text-[#4B5563]">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-xs text-[#6B7280] mt-1">{getFileTypeDisplay(selectedFile)}</p>
               </div>
             )}
           </label>
@@ -202,7 +228,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
         {selectedFile && !uploading && progress < 100 && (
           <div className="space-y-5 mb-6">
             <div>
-              <label className="block text-sm text-[#1F2937] mb-2" style={{ fontWeight: 600 }}>
+              <label className="block text-sm font-semibold text-[#1F2937] mb-2">
                 Title
               </label>
               <input
@@ -216,7 +242,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
             </div>
 
             <div>
-              <label className="block text-sm text-[#1F2937] mb-2" style={{ fontWeight: 600 }}>
+              <label className="block text-sm font-semibold text-[#1F2937] mb-2">
                 Description
               </label>
               <textarea
@@ -230,7 +256,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
             </div>
 
             <div>
-              <label className="block text-sm text-[#1F2937] mb-2" style={{ fontWeight: 600 }}>
+              <label className="block text-sm font-semibold text-[#1F2937] mb-2">
                 Change Notes
               </label>
               <textarea
@@ -248,7 +274,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
         {/* Progress Bar */}
         {uploading && (
           <div className="mb-6">
-            <div className="flex justify-between text-sm text-[#4B5563] mb-3" style={{ fontWeight: 600 }}>
+            <div className="flex justify-between text-sm font-semibold text-[#4B5563] mb-3">
               <span>Uploading...</span>
               <span>{progress}%</span>
             </div>
@@ -265,7 +291,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
         {progress === 100 && !uploading && (
           <div className="mb-6 p-4 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center">
             <CheckCircle className="w-5 h-5 text-[#10B981] mr-3 flex-shrink-0" />
-            <span className="text-[#10B981] text-sm" style={{ fontWeight: 600 }}>
+            <span className="text-[#10B981] text-sm font-semibold">
               Upload successful!
             </span>
           </div>
@@ -275,7 +301,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
         {error && (
           <div className="mb-6 p-4 bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 rounded-lg flex items-start">
             <AlertCircle className="w-5 h-5 text-[#FF6B6B] mr-3 mt-0.5 flex-shrink-0" />
-            <span className="text-[#FF6B6B] text-sm" style={{ fontWeight: 500 }}>
+            <span className="text-[#FF6B6B] text-sm font-medium">
               {error}
             </span>
           </div>
@@ -286,8 +312,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
           <button
             onClick={handleUpload}
             disabled={!selectedFile || uploading || progress === 100}
-            className="flex-1 px-6 py-2.5 bg-[#1E3A8A] text-white rounded-lg hover:bg-[#1E3A8A]/90 disabled:bg-[#D1D5DB] disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A8A]"
-            style={{ fontWeight: 600 }}
+            className="flex-1 px-6 py-2.5 bg-[#1E3A8A] text-white rounded-lg hover:bg-[#1E3A8A]/90 disabled:bg-[#D1D5DB] disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A8A] font-semibold"
           >
             {uploading ? 'Uploading...' : 'Upload File'}
           </button>
@@ -295,8 +320,7 @@ const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
           {selectedFile && !uploading && (
             <button
               onClick={resetForm}
-              className="px-6 py-2.5 bg-[#F3F4F6] text-[#4B5563] rounded-lg hover:bg-[#D1D5DB] transition-all duration-200 flex items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4B5563]"
-              style={{ fontWeight: 600 }}
+              className="px-6 py-2.5 bg-[#F3F4F6] text-[#4B5563] rounded-lg hover:bg-[#D1D5DB] transition-all duration-200 flex items-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4B5563] font-semibold"
             >
               <X className="w-4 h-4 mr-2" />
               Clear

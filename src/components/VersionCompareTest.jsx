@@ -134,9 +134,9 @@ const VersionCompareEmbed = ({ projectId }) => {
       const token = localStorage.getItem('access_token');
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
       
-      console.log('🔍 Fetching versions for project:', projectId);
-      console.log('🔍 Using URL:', `${API_BASE_URL}/api/deliverables/projects/${projectId}`);
-      console.log('🔍 Token exists:', !!token);
+      console.log('Fetching versions for project:', projectId);
+      console.log('Using URL:', `${API_BASE_URL}/api/deliverables/projects/${projectId}`);
+      console.log('Token exists:', !!token);
       
       const response = await fetch(`${API_BASE_URL}/api/deliverables/projects/${projectId}`, {
         method: 'GET',
@@ -146,16 +146,16 @@ const VersionCompareEmbed = ({ projectId }) => {
         }
       });
 
-      console.log('📦 Response status:', response.status);
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', errorData);
+        console.error('API Error:', errorData);
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('✅ API Success:', data);
+      console.log('API Success:', data);
       
       if (!data.success) {
         throw new Error(data.error || 'Failed to load versions');
@@ -164,7 +164,7 @@ const VersionCompareEmbed = ({ projectId }) => {
       setVersions(data.deliverables || []);
       
     } catch (err) {
-      console.error('💥 Fetch error:', err);
+      console.error('Fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

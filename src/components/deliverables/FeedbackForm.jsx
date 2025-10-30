@@ -11,38 +11,47 @@ const FeedbackForm = ({ deliverableId, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const feedbackData = {
-        deliverable_id: deliverableId,
-        content: formData.content,
-        priority: formData.priority,
-        feedback_type: formData.feedback_type
-      };
+  // In FeedbackForm.jsx - Update handleSubmit function
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  
+  try {
+    const feedbackData = {
+      deliverable_id: deliverableId,
+      content: formData.content,
+      priority: formData.priority,
+      feedback_type: formData.feedback_type
+    };
 
-      const response = await submitFeedback(feedbackData);
-      
-      // Reset form
-      setFormData({
-        content: '',
-        priority: 'medium',
-        feedback_type: 'comment'
-      });
-      
-      // Notify parent
-      onSuccess?.(response.feedback);
-      
-    } catch (err) {
-      console.error('Failed to submit feedback:', err);
-      setError(err.error || 'Failed to submit feedback. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log('Submitting feedback:', feedbackData);
+    const response = await submitFeedback(feedbackData);
+    
+    // Reset form
+    setFormData({
+      content: '',
+      priority: 'medium',
+      feedback_type: 'comment'
+    });
+    
+    // Notify parent
+    onSuccess?.(response.feedback);
+    
+  } catch (err) {
+    //  - Update the error display
+    {error && (
+      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-800 text-sm font-medium">{error}</p>
+        {error.includes('endpoint') && (
+          <p className="text-red-700 text-xs mt-1">
+            The feedback system is currently being set up. Please try again later.
+          </p>
+        )}
+      </div>
+    )}
+  }
+};
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

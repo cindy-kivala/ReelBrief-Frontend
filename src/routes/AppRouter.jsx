@@ -1,204 +1,90 @@
-import React from 'react';
-import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import PropTypes from 'prop-types';
+// AppRouter.jsx
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
-// Public Pages
-import LandingPage from '../pages/LandingPage';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
+// Pages
+import Login from '../pages/Login'
+import Register from '../pages/Register'
+import LandingPage from '../pages/LandingPage'
+import ComponentTestPage from '../pages/ComponentTestPage'
 
-// Protected Pages - Admin
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import FreelancerVetting from '../pages/admin/FreelancerVetting';
-import EscrowManagement from '../pages/admin/EscrowManagement';
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+)
 
-// Protected Pages - Freelancer
-import FreelancerDashboard from '../pages/freelancer/FreelancerDashboard';
-import FreelancerProjects from '../pages/freelancer/FreelancerProjects';
-import VersionCompare from '../components/deliverables/VersionCompare';
-
-// Protected Pages - Client
-import ClientDashboard from '../pages/client/ClientDashboard';
-import ClientProjects from '../pages/client/ClientProjects';
-
-// Shared Protected Pages
-import ProjectDetail from '../pages/ProjectDetail';
-import DeliverableDetail from '../pages/DeliverableDetail';
-import Profile from '../pages/Profile';
-
-// Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth()
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return <LoadingSpinner />
   }
 
   if (!isAuthenticated) {
-    console.log('Not authenticated, redirecting to login');
-
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-    console.log('Access denied. User role:', user?.role, 'Allowed:', allowedRoles);
-    return <Navigate to="/unauthorized" replace />;
+  return children
+}
+
+// Public Route component (redirect to dashboard if already authenticated)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return <LoadingSpinner />
   }
 
-  return children;
-};
-
-ProtectedRoute.propTypes = {
-  children: PropTypes.node,
-  allowedRoles: PropTypes.array,
-};
-
-function VersionCompareWrapper() {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-
-  // Validate projectId
-  if (!projectId) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">No project ID provided</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
+  if (isAuthenticated) {
+    return <Navigate to="/test-components" replace />
   }
 
-  return (
-    <VersionCompare 
-      projectId={projectId}
-      onBack={() => navigate(-1)}
-    />
-  );
+  return children
 }
 
 function AppRouter() {
-  const { user } = useAuth();
-
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-
-      {/* Admin Routes */}
-      <Route
-        path="/admin-dashboard"
+      <Route 
+        path="/login" 
         element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } 
       />
-      <Route
-        path="/admin/freelancers"
+      <Route 
+        path="/register" 
         element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <FreelancerVetting />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/escrow"
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <EscrowManagement />
-          </ProtectedRoute>
-        }
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        } 
       />
 
-      {/* Freelancer Routes */}
-      <Route
-        path="/freelancer-dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['freelancer']}>
-            <FreelancerDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/freelancer/projects"
-        element={
-          <ProtectedRoute allowedRoles={['freelancer']}>
-            <FreelancerProjects />
-          </ProtectedRoute>
-        }
-      />
-
-
-      {/* Client Routes */}
-      <Route
-        path="/client-dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['client']}>
-            <ClientDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/client/projects"
-        element={
-          <ProtectedRoute allowedRoles={['client']}>
-            <ClientProjects />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Shared Protected Routes */}
-      <Route
-        path="/projects/:id"
+      {/* Protected routes */}
+      <Route 
+        path="/test-components" 
         element={
           <ProtectedRoute>
-            <ProjectDetail />
+            <ComponentTestPage />
           </ProtectedRoute>
-        }
+        } 
       />
 
-      <Route
-        path="/projects/:projectId/versions"
-        element={
-          <ProtectedRoute>
-            <VersionCompareWrapper />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/deliverables/:id"
-        element={
-          <ProtectedRoute>
-            <DeliverableDetail />
-          </ProtectedRoute>
-        }
-      />
-
-
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Fallback */}
+      {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  );
+  )
 }
 
-export default AppRouter;
+export default AppRouter
