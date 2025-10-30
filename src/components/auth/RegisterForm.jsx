@@ -1,17 +1,20 @@
 /**
  * RegisterForm.jsx
  * Owner: Ryan
- * Description: Handles user registration with conditional CV upload. No auto-login.
+ * Description: Register user with optional freelancer CV. In dev, auto-verify & auto-login.
  */
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 
-export default function RegisterForm() {
-  const { register } = useAuth();
-  const navigate = useNavigate();
+const REQUIRE_EMAIL_VERIFICATION =
+  (import.meta.env.VITE_REQUIRE_EMAIL_VERIFICATION || "false").toLowerCase() === "true";
 
+export default function RegisterForm() {
+  const { register, login } = useAuth();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -22,98 +25,92 @@ export default function RegisterForm() {
   });
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setForm({ ...form, cv: file });
+    setForm({ ...form, cv: e.target.files[0] || null });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return toast.error("Email and password required");
-
-    const formData = new FormData();
-    Object.entries(form).forEach(([k, v]) => v !== null && formData.append(k, v));
-
-    const res = await register(formData);
-    if (!res) return;
-
-    // If backend returned a dev verify token, go straight to verify page
-    if (res.verification_token) {
-      toast("Verifying now (dev)…");
-      navigate(`/verify-email/${res.verification_token}`);
+    if (!form.email || !form.password) {
+      toast.error("Email and password required");
       return;
     }
 
-    // Otherwise, fall back to email link instructions
-    toast.success("Check your email for a verification link.");
+    const fd = new FormData();
+    Object.entries(form).forEach(([k, v]) => v !== null && fd.append(k, v));
+
+    setBusy(true);
+    const res = await register(fd);
+    setBusy(false);
+    if (!res) return;
+
+    // If your env explicitly requires email verification, just send to login.
+    if (REQUIRE_EMAIL_VERIFICATION) {
+      toast.success("Check your email to verify your account.");
+      navigate("/login");
+      return;
+    }
+
+    // Otherwise: auto-login (dev)
+    const user = await login({ email: form.email, password: form.password });
+    if (!user) return;
+
+    if (user.role === "admin") navigate("/admin/dashboard");
+    else if (user.role === "freelancer") navigate("/freelancer/dashboard");
+    else navigate("/client/dashboard");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 mx-auto rounded-md bg-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">RB</span>
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-2">
-          Create Your Account
-        </h2>
-        <p className="text-center text-gray-500 mb-6">
-          Join ReelBrief as a client or freelancer
-        </p>
+        <h2 className="text-2xl font-semibold text-center mb-6">Create account</h2>
 
         <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium">First Name</label>
+            <label className="block text-gray-700">First name</label>
             <input
               type="text"
               value={form.first_name}
               onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Enter your first name"
+              className="w-full border rounded-md px-3 py-2 mt-1"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Last Name</label>
+            <label className="block text-gray-700">Last name</label>
             <input
               type="text"
               value={form.last_name}
               onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Enter your last name"
+              className="w-full border rounded-md px-3 py-2 mt-1"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Email</label>
+            <label className="block text-gray-700">Email</label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="you@example.com"
+              className="w-full border rounded-md px-3 py-2 mt-1"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Password</label>
+            <label className="block text-gray-700">Password</label>
             <input
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Enter your password"
+              className="w-full border rounded-md px-3 py-2 mt-1"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium">Role</label>
+            <label className="block text-gray-700">Role</label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full border rounded-md px-3 py-2 mt-1"
             >
               <option value="client">Client</option>
               <option value="freelancer">Freelancer</option>
@@ -122,32 +119,30 @@ export default function RegisterForm() {
 
           {form.role === "freelancer" && (
             <div>
-              <label className="block text-gray-700 font-medium">Upload Your CV</label>
+              <label className="block text-gray-700">Upload CV (PDF/DOC/DOCX)</label>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
                 onChange={handleFileChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full border rounded-md px-3 py-2 mt-1"
               />
-              <p className="text-sm text-gray-500 mt-1">
-                Accepted formats: PDF, DOC, DOCX
-              </p>
             </div>
           )}
 
           <button
             type="submit"
-            className="w-full bg-blue-700 text-white font-medium py-2 rounded-md hover:bg-blue-800 transition"
+            disabled={busy}
+            className="w-full bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition"
           >
-            Sign Up
+            {busy ? "Creating..." : "Sign Up"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-blue-600 hover:underline">
             Sign in
-          </a>
+          </Link>
         </p>
       </div>
     </div>

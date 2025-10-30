@@ -7,13 +7,13 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import { useAuth } from "../context/AuthContext";
+import useAuth from "../hooks/useAuth"; // ✅ import from hook, not context
 
 // -------------------- Public Pages --------------------
 import LandingPage from "../pages/LandingPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import VerifyEmail from "../pages/VerifyEmail"; // ✅ Added route
+import VerifyEmail from "../pages/VerifyEmail";
 
 // -------------------- Admin Pages --------------------
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -44,17 +44,19 @@ import ProjectDetail from "../pages/ProjectDetail";
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, user, loading } = useAuth();
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         Loading...
       </div>
     );
+  }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role))
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
     return <Navigate to="/unauthorized" replace />;
+  }
 
   return children;
 };
@@ -65,7 +67,7 @@ ProtectedRoute.propTypes = {
 };
 
 // -------------------- Router --------------------
-function AppRouter() {
+export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
@@ -73,7 +75,6 @@ function AppRouter() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        {/* ✅ Email verification route */}
         <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
         {/* ---------- Admin Routes ---------- */}
@@ -226,5 +227,3 @@ function AppRouter() {
     </BrowserRouter>
   );
 }
-
-export default AppRouter;
