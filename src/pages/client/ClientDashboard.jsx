@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { fetchDashboardStats, fetchRecentProjects, approveProject } from "@/api/dashboardAPI";
 import { Briefcase, Clock, CheckCircle, DollarSign, ThumbsUp, RefreshCcw } from "lucide-react";
+import Navbar from "../../components/layout/Navbar";
+import Sidebar from "../../components/layout/Sidebar";
 
 const ClientDashboard = () => {
   const [stats, setStats] = useState({});

@@ -1,159 +1,91 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axiosClient from '../api/axiosClient';
+/**
+ * AuthContext.jsx
+ * Owner: Ryan
+ * Description: Provides authentication context and state management for ReelBrief frontend.
+ */
+import { createContext, useContext, useState, useEffect } from "react";
+import authAPI from "../api/authAPI";
+import toast from "react-hot-toast";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // Check if user is logged in on app start
+  // Auto-fetch user if access token exists
   useEffect(() => {
-    checkAuth();
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const data = await authAPI.getCurrentUser();
+        setUser(data);
+      } catch {
+        localStorage.removeItem("accessToken");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const checkAuth = async () => {
+  // LOGIN
+  const login = async (credentials) => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      console.log('Checking auth with token');
-      const response = await axiosClient.get('/api/auth/me');
-      
-      // Handle different response structures
-      if (response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log('User authenticated:', response.data.user);
-      } else if (response.data.success && response.data.user) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        console.log('User authenticated:', response.data.user);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // Clear invalid token
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
+      const { user, access_token } = await authAPI.login(credentials);
+      setUser(user);
+      localStorage.setItem("accessToken", access_token);
+      toast.success(`Welcome back, ${user.first_name || "User"}!`);
+      return user;
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Login failed");
+      return null;
     }
   };
 
-  const login = async (email, password) => {
+  // REGISTER (no auto-login; user must verify first)
+  const register = async (formData) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Attempting login for:', email);
-      
-      const response = await axiosClient.post('/api/auth/login', {
-        email,
-        password
-      });
-
-      console.log('Login response:', response.data);
-
-      const responseData = response.data;
-
-      // Handle different possible response structures
-      if (responseData.access_token) {
-        // Structure: { access_token, refresh_token, user }
-        const { user, access_token } = responseData;
-        
-        // Store token and user
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Set auth state
-        setUser(user);
-        setIsAuthenticated(true);
-        
-        console.log('Login successful, user:', user);
-        return { success: true, user };
-        
-      } else if (responseData.success && responseData.access_token) {
-        // Structure: { success: true, access_token, user }
-        const { user, access_token } = responseData;
-        
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-        setIsAuthenticated(true);
-        
-        console.log('Login successful, user:', user);
-        return { success: true, user };
-        
-      } else if (responseData.error) {
-        // Structure: { error: 'message' }
-        throw new Error(responseData.error);
-        
-      } else {
-        // Unknown response structure
-        throw new Error('Invalid response from server');
-      }
-      
-    } catch (error) {
-      console.error('Login failed:', error);
-      
-      let errorMessage = 'Login failed. Please check your credentials.';
-      
-      if (error.response?.status === 401) {
-        errorMessage = 'Invalid email or password.';
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      const res = await authAPI.register(formData);
+      toast.success("Account created! Check your email to verify.");
+      return res; // contains dev_verify_url & verification_token
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Registration failed");
+      return null;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    await authAPI.logout();
     setUser(null);
-    setIsAuthenticated(false);
-    setError(null);
-    console.log('User logged out');
-  };
-
-  const clearError = () => {
-    setError(null);
+    toast.success("Logged out successfully");
   };
 
   const value = {
     user,
-    isAuthenticated,
     loading,
-    error,
+    isAuthenticated: !!user,
+    isAdmin: user?.role === "admin",
+    isFreelancer: user?.role === "freelancer",
+    isClient: user?.role === "client",
     login,
+    register,
     logout,
-    clearError,
-    checkAuth
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  return ctx;
+}

@@ -1,62 +1,79 @@
-// src/api/axiosClient.js
-import axios from 'axios';
+/**
+ * axiosClient.js
+ * Owner: Ryan
+ * Description: Global Axios instance with JWT interceptors, token refresh, and secure defaults.
+ */
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+console.log("Axios Base URL:", BASE_URL);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Create axios instance
 const axiosClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  // No withCredentials - using proxy instead
+  baseURL: BASE_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
-// Request interceptor
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
+
+const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
+const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
+const setAccessToken = (token) => {
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
+  }
+};
+const clearTokens = () => {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  delete axiosClient.defaults.headers.Authorization;
+};
+
 axiosClient.interceptors.request.use(
   (config) => {
-    // Don't add Authorization header for login/register endpoints
-    const isAuthEndpoint = config.url.includes('/auth/login') || config.url.includes('/auth/register');
-    
-    if (!isAuthEndpoint) {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log('Auth token attached to request:', config.url);
-      } else {
-        console.log('No auth token found for:', config.url);
-      }
-    } else {
-      console.log('Auth endpoint - skipping token:', config.url);
-    }
-    
+    const token = getAccessToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    console.error('Request error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
 axiosClient.interceptors.response.use(
-  (response) => {
-    console.log(`API Response: ${response.config.url} ${response.status}`);
-    return response;
-  },
-  (error) => {
-    console.error(`API Error: ${error.config?.url} ${error.response?.status}`);
-    
-    if (error.code === 'ERR_NETWORK') {
-      console.error('Network error - Check backend connection');
-      error.message = 'Unable to connect to server. Please check if the backend is running.';
-    } else if (error.response?.status === 401) {
-      console.error('Unauthorized - Redirecting to login');
-      if (!error.config?.url.includes('/auth/login')) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Expired access token → try refresh once
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        clearTokens();
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      try {
+        const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
+          headers: { Authorization: `Bearer ${refreshToken}` },
+        });
+        if (res.data?.access_token) {
+          setAccessToken(res.data.access_token);
+          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+          return axiosClient(originalRequest);
+        }
+      } catch (e) {
+        clearTokens();
+        window.location.href = "/login";
+        return Promise.reject(e);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

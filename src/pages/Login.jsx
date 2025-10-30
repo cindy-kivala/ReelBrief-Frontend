@@ -3,107 +3,144 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { login, isAuthenticated, loading, error } = useAuth();
-  const navigate = useNavigate();
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
+import toast from "react-hot-toast";
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/test-components');
-    }
-  }, [isAuthenticated, navigate]);
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting login...');
-    
-    const result = await login(email, password);
-    console.log('Login result:', result);
-    
-    if (result.success) {
-      navigate('/test-components');
+
+    if (!form.email || !form.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    const user = await login(form);
+    setLoading(false);
+
+    if (user) {
+      toast.success(`Welcome back, ${user.first_name || "User"}!`);
+      navigate("/"); // ✅ redirect after successful login
+    } else {
+      toast.error("Invalid email or password");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
+    <div className="login-page min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="login-card bg-white rounded-xl shadow-md p-8 w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="logo w-12 h-12 mx-auto rounded-md bg-blue-700 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">RB</span>
+          </div>
         </div>
-        
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-1 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+        {/* Title */}
+        <h1 className="text-2xl font-semibold text-center">Welcome Back</h1>
+        <p className="text-center text-gray-500 mb-6">
+          Sign in to your ReelBrief account
+        </p>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email */}
+          <div className="form-group">
+            <label className="block text-sm font-medium mb-1">
+              Email Address
+            </label>
+            <div className="relative">
               <input
-                id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                className="form-input w-full border rounded-md p-2 pl-8"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
+              <span className="input-icon absolute left-2 top-2.5 text-gray-400">
+                @
+              </span>
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+          </div>
+
+          {/* Password */}
+          <div className="form-group">
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium">Password</label>
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
               <input
-                id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                className="form-input w-full border rounded-md p-2 pl-8"
+                placeholder="Enter your password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
+              <span className="input-icon absolute left-2 top-2.5 text-gray-400">
+                🔒
+              </span>
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-
-          {/* Demo credentials hint */}
-          <div className="text-center text-sm text-gray-600">
-            <p>Try: alex.designer@demo.com / password</p>
-          </div>
+          {/* Sign In Button */}
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
         </form>
+
+        {/* Sign Up & Back Links */}
+        <div className="text-center mt-6">
+          <p className="text-gray-600 text-sm">
+            Don’t have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              Sign up
+            </Link>
+          </p>
+          <Link
+            to="/"
+            className="block mt-2 text-sm text-gray-500 hover:underline"
+          >
+            ← Back to home
+          </Link>
+        </div>
+
+        {/* Demo Accounts */}
+        <div className="demo-box mt-8 border rounded-md p-4 text-sm bg-gray-50">
+          <p className="font-semibold mb-2">Demo Test Accounts:</p>
+          <ul className="space-y-1 text-gray-700">
+            <li>
+              • Client: <code>client@test.com</code>
+            </li>
+            <li>
+              • Freelancer: <code>freelancer@test.com</code>
+            </li>
+            <li>
+              • Admin: <code>admin@test.com</code>
+            </li>
+            <li>
+              Password: <code>any password</code>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
