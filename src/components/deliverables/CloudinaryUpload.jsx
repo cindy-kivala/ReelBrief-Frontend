@@ -1,6 +1,7 @@
+//src/components/deliverables/CloudinaryUpload.jsx
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, CheckCircle, AlertCircle, File } from 'lucide-react';
-import { uploadDeliverable } from '/src/api/deliverableAPI';
+import { createDeliverable } from '../../api/deliverableAPI';
 
 const CloudinaryUpload = ({ projectId, onUploadSuccess, onUploadError }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -103,7 +104,7 @@ const handleUpload = async () => {
       });
     }, 300);
 
-    const response = await uploadDeliverable(data);
+    const response = await createDeliverable(data);
 
     clearInterval(progressInterval);
     setProgress(100);

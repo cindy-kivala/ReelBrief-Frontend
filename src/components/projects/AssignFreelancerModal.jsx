@@ -4,42 +4,105 @@
  * Description: Handles user authentication (login/register/logout).
  */
 
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
 
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL  || "/api",
-  headers: { "Content-Type": "application/json" },
-});
+const AssignFreelancerModal = ({ projectId, isOpen, onClose, onAssign }) => {
+  const [availableFreelancers, setAvailableFreelancers] = useState([]);
+  const [selectedFreelancer, setSelectedFreelancer] = useState('');
+  const [loading, setLoading] = useState(false);
 
-// Save token automatically
-API.interceptors.response.use((response) => {
-  if (response.data?.access_token) {
-    localStorage.setItem("token", response.data.access_token);
-  }
-  return response;
-});
+  useEffect(() => {
+    if (isOpen) {
+      fetchAvailableFreelancers();
+    }
+  }, [isOpen]);
 
-// Register user
-export const registerUser = async (data) => {
-  const res = await API.post("/auth/register", data);
-  return res.data;
+  const fetchAvailableFreelancers = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/projects/available-freelancers', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAvailableFreelancers(data.freelancers);
+      }
+    } catch (error) {
+      console.error('Error fetching freelancers:', error);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!selectedFreelancer) return;
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/projects/${projectId}/assign-freelancer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          freelancer_id: parseInt(selectedFreelancer) // Use user ID
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        onAssign(result.project);
+        onClose();
+      } else {
+        alert(result.error || 'Failed to assign freelancer');
+      }
+    } catch (error) {
+      console.error('Error assigning freelancer:', error);
+      alert('Error assigning freelancer');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Assign Freelancer</h2>
+        
+        <div className="form-group">
+          <label>Select Freelancer:</label>
+          <select 
+            value={selectedFreelancer} 
+            onChange={(e) => setSelectedFreelancer(e.target.value)}
+            disabled={loading}
+          >
+            <option value="">Choose a freelancer...</option>
+            {availableFreelancers.map(freelancer => (
+              <option key={freelancer.user_id} value={freelancer.user_id}>
+                {freelancer.name} - {freelancer.skills.join(', ')} - ${freelancer.hourly_rate}/hr
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="modal-actions">
+          <button onClick={onClose} disabled={loading}>Cancel</button>
+          <button 
+            onClick={handleAssign} 
+            disabled={!selectedFreelancer || loading}
+            className="primary"
+          >
+            {loading ? 'Assigning...' : 'Assign Freelancer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-// Login user
-export const loginUser = async (data) => {
-  const res = await API.post("/auth/login", data);
-  if (res.data.access_token) {
-    localStorage.setItem("token", res.data.access_token);
-  }
-  return res.data;
-};
-
-// Logout user
-export const logoutUser = () => {
-  localStorage.removeItem("token");
-};
-
-// Get current token
-export const getAuthToken = () => {
-  return localStorage.getItem("token");
-};
+export default AssignFreelancerModal;

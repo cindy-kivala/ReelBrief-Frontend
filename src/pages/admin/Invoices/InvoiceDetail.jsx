@@ -1,4 +1,4 @@
-/**
+/** src/pages.admin/Invoices/InvoiceDetail.jsx
  * InvoiceDetail.jsx
  * Owner: Caleb
  * Description: Displays details of a specific invoice for admin review.

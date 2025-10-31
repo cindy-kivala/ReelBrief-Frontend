@@ -1,4 +1,6 @@
+//src/pages/client/ClientDashboard.jsx
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchDashboardStats, fetchRecentProjects, approveProject } from "@/api/dashboardAPI";
 import { Briefcase, Clock, CheckCircle, DollarSign, ThumbsUp, RefreshCcw } from "lucide-react";
 import Navbar from "../../components/layout/Navbar";
@@ -63,7 +65,12 @@ const ClientDashboard = () => {
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {statCards.map((card, i) => (
           <div key={i} className="bg-white p-5 rounded-xl border text-center">
-            <card.icon className={`mx-auto text-3xl text-${card.color}-600 mb-2`} />
+            <card.icon className={`mx-auto text-3xl ${
+              card.color === 'blue' ? 'text-blue-600' :
+              card.color === 'yellow' ? 'text-yellow-600' :
+              card.color === 'green' ? 'text-green-600' :
+              'text-indigo-600'
+            } mb-2`} />
             <p className="text-2xl font-bold">{card.value}</p>
             <p className="text-sm text-gray-600">{card.label}</p>
           </div>
@@ -73,7 +80,7 @@ const ClientDashboard = () => {
       <section className="bg-white p-6 rounded-xl border">
         <div className="flex justify-between mb-6">
           <h2 className="text-2xl font-bold">Recent Projects</h2>
-          <a href="/projects" className="text-blue-500 hover:underline">View All</a>
+          <Link to="/projects" className="text-blue-500 hover:underline">View All</Link>
         </div>
 
         <div className="space-y-4">

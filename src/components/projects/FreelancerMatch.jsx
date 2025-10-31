@@ -34,7 +34,7 @@ export default function FreelancerMatch({ project, onClose }) {
 
         const res = await axios.get(`/api/freelancers/search?${query}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
           },
         });
 

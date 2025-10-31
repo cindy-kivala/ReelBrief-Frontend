@@ -9,10 +9,15 @@
 // - Include “View Details” button linking to ProjectDetail
 
 import React from "react";
+import { useAuth } from "../../context/AuthContext";
 
-export default function ProjectCard({ project, onView }) {
+export default function ProjectCard({ project, onView, onAssign }) {
   // Return null if no project is provided
   if (!project) return null;
+
+  const { user } = useAuth();
+  const isClient = user?.role === 'client';
+  const isAdmin = user?.role === 'admin';
 
   const {
     title = "Untitled Project",
@@ -48,6 +53,25 @@ export default function ProjectCard({ project, onView }) {
       <p className="mt-2 text-sm text-gray-600 line-clamp-3">
         {description}
       </p>
+
+      <div className="flex gap-2 mt-4">
+        <button 
+          onClick={() => onView(project)}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          View Details
+        </button>
+        
+        {/* Only show Assign button for clients/admins */}
+        {(isClient || isAdmin) && onAssign && (
+          <button 
+            onClick={() => onAssign(project)}
+            className="px-3 py-1 bg-green-500 text-white rounded"
+          >
+            Assign Freelancer
+          </button>
+        )}
+      </div>
 
       {/* --- Skills --- */}
       {required_skills.length > 0 && (

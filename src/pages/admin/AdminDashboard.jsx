@@ -1,5 +1,6 @@
-// src/pages/AdminDashboard.jsx
+// src/pages/admin/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   fetchDashboardStats,
   fetchRecentProjects,
@@ -91,9 +92,7 @@ const AdminDashboard = () => {
       <section className="mt-10 bg-white p-6 rounded-xl border border-gray-300">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-bold text-2xl text-gray-800">Recent Project Requests</h1>
-          <a href="/projects" className="text-blue-500 hover:underline">
-            View All
-          </a>
+          <Link to="/projects" className="text-blue-500 hover:underline">View All</Link>
         </div>
 
         <div className="flex flex-col gap-5">
@@ -113,12 +112,12 @@ const AdminDashboard = () => {
                   >
                     {project.status}
                   </span>
-                  <a
-                    href={`/projects/${project.id}`}
+                  <Link
+                    to={`/projects/${project.id}`}
                     className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
                   >
                     {project.status === "completed" ? "View Report" : "Review"}
-                  </a>
+                  </Link>
                 </div>
               </div>
               <p className="text-gray-600 text-sm">Client: {project.client_name}</p>
@@ -148,9 +147,9 @@ const AdminDashboard = () => {
       <section className="mt-10 bg-white p-6 rounded-xl border border-gray-300">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-bold text-2xl text-gray-800">Escrow Payment Overview</h1>
-          <a href="/transactions" className="text-blue-500 hover:underline">
+          <Link to="/transactions" className="text-blue-500 hover:underline">
             View All
-          </a>
+          </Link>
         </div>
 
         <div className="flex flex-col gap-5">
@@ -166,12 +165,12 @@ const AdminDashboard = () => {
                   >
                     {tx.status}
                   </span>
-                  <a
-                    href={`/transactions/${tx.id}`}
+                  <Link
+                    to={`/transactions/${tx.id}`}
                     className="text-sm border border-gray-300 px-3 py-1 rounded-lg hover:bg-red-400 hover:text-white transition"
                   >
                     {tx.status === "released" ? "Manage" : "Review"}
-                  </a>
+                  </Link>
                 </div>
               </div>
               <p className="text-gray-600 text-sm">Client: {tx.client_name}</p>

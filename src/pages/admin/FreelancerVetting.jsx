@@ -1,4 +1,4 @@
-/**
+/**src/pages/admin/FreelancerVetting.jsx
  * FreelancerVetting.jsx
  * Owner: Caleb
  * Description: Admin page to view, approve, or reject freelancer applications with interactive icons and tooltips.

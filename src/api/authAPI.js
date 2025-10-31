@@ -5,8 +5,8 @@
  */
 import axiosClient from "./axiosClient";
 
-const TOKEN_KEY = "accessToken";
-const REFRESH_KEY = "refreshToken";
+const TOKEN_KEY = "access_token";
+const REFRESH_KEY = "refresh_token";
 
 const storeTokens = (access, refresh) => {
   if (access) localStorage.setItem(TOKEN_KEY, access);

@@ -14,6 +14,7 @@ import LandingPage from "../pages/LandingPage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import VerifyEmail from "../pages/VerifyEmail";
+import Notifications from "../pages/Notifications";
 
 //  Admin Pages 
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -35,10 +36,13 @@ import ClientProjects from "../pages/client/ClientProjects";
 import ClientInvoiceDetail from "../pages/client/Invoices/InvoiceDetail";
 import ClientInvoiceList from "../pages/client/Invoices/InvoiceList";
 import ClientInvoicePay from "../pages/client/Invoices/InvoicePayment";
+import ProjectCreate from '../pages/client/ProjectCreate';
+
 
 //  Shared Protected Pages 
 import Profile from "../pages/Profile";
-import ProjectDetail from "../pages/ProjectDetail";
+import ProjectDetailPage from "../pages/ProjectDetailPage";
+import ProjectList from "../pages/ProjectList";
 
 // Protected Route 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -177,6 +181,12 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/client/projects/create" element={
+          <ProtectedRoute requiredRole="client">
+            <ProjectCreate />
+          </ProtectedRoute>
+        } />
         <Route
           path="/client/invoices"
           element={
@@ -211,11 +221,30 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "freelancer", "client"]}>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "freelancer", "client"]}>
+              <ProjectList />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/projects/:id"
           element={
             <ProtectedRoute allowedRoles={["admin", "freelancer", "client"]}>
-              <ProjectDetail />
+              <ProjectDetailPage />
             </ProtectedRoute>
           }
         />
@@ -229,55 +258,22 @@ function AppRouter() {
 
 // Public Route component (redirect to dashboard if already authenticated)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading } = useAuth();
 
-  if (loading) {
-    return <LoadingSpinner />
-  }
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
 
-  if (isAuthenticated) {
-    return <Navigate to="/test-components" replace />
-  }
+  if (isAuthenticated) return <Navigate to="/" replace />;
 
-  return children
-}
+  return children;
+};
 
-function AppRouter() {
-  return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<LandingPage />} />
-      <Route 
-        path="/login" 
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        } 
-      />
-      <Route 
-        path="/register" 
-        element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        } 
-      />
+PublicRoute.propTypes = {
+  children: PropTypes.node,
+};
 
-      {/* Protected routes */}
-      <Route 
-        path="/test-components" 
-        element={
-          <ProtectedRoute>
-            <ComponentTestPage />
-          </ProtectedRoute>
-        } 
-      />
-
-      {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
-}
-
-export default AppRouter
+export default AppRouter;
