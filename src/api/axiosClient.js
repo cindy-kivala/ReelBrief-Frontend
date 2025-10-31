@@ -5,13 +5,17 @@
  */
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// FIX: Changed VITE_API_URL to VITE_API_BASE_URL to match .env file
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 console.log("Axios Base URL:", BASE_URL);
 
-// Create axios instance
+// Create axios instance with credentials support for CORS
 const axiosClient = axios.create({
   baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
+  headers: { 
+    "Content-Type": "application/json"
+  },
+  withCredentials: true, // ADDED: Enable credentials for CORS
 });
 
 const ACCESS_TOKEN_KEY = "access_token";
@@ -31,6 +35,7 @@ const clearTokens = () => {
   delete axiosClient.defaults.headers.Authorization;
 };
 
+// Request interceptor - attach JWT token
 axiosClient.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
@@ -46,6 +51,7 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor - handle token refresh
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -65,6 +71,7 @@ axiosClient.interceptors.response.use(
       try {
         const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
           headers: { Authorization: `Bearer ${refreshToken}` },
+          withCredentials: true,
         });
         if (res.data?.access_token) {
           setAccessToken(res.data.access_token);
