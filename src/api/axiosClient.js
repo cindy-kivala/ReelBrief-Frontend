@@ -1,36 +1,90 @@
-import axios from 'axios';
+/**
+ * axiosClient.js
+ * Owner: Ryan
+ * Description: Global Axios instance with JWT interceptors, token refresh, and secure defaults.
+ */
+import axios from "axios";
 
+// FIX: Changed VITE_API_URL to VITE_API_BASE_URL to match .env file
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+console.log("Axios Base URL:", BASE_URL);
+
+// Create axios instance with credentials support for CORS
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json',
+  baseURL: BASE_URL,
+  headers: { 
+    "Content-Type": "application/json"
   },
+  withCredentials: true, // ADDED: Enable credentials for CORS
 });
 
-// Request interceptor - Add auth token
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
+
+const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
+const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
+const setAccessToken = (token) => {
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
+  }
+};
+const clearTokens = () => {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  delete axiosClient.defaults.headers.Authorization;
+};
+
+// Request interceptor - attach JWT token
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const token = getAccessToken();
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    
+    // FIX: Remove Content-Type header for FormData to let browser set it automatically
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
+    
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - handle token refresh
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Expired access token → try refresh once
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        clearTokens();
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
+
+      try {
+        const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
+          headers: { Authorization: `Bearer ${refreshToken}` },
+          withCredentials: true,
+        });
+        if (res.data?.access_token) {
+          setAccessToken(res.data.access_token);
+          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+          return axiosClient(originalRequest);
+        }
+      } catch (e) {
+        clearTokens();
+        window.location.href = "/login";
+        return Promise.reject(e);
+      }
     }
+
     return Promise.reject(error);
   }
 );
