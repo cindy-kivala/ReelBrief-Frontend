@@ -1,104 +1,97 @@
-// src/components/layout/Sidebar.jsx - FIXED VERSION
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Briefcase, 
-  FileText, 
-  Users, 
+import { Link, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  FolderOpen,
+  FileText,
+  Star,
+  Users,
+  ShieldCheck,
+  Briefcase,
   DollarSign,
-  LogOut
+  LogOut,
+  UserCircle,
 } from "lucide-react";
-import useAuth from "../../hooks/useAuth";
 
-const Sidebar = () => {
-  const { user, logout } = useAuth();
-  const location = useLocation();
-  
-  if (!user) return null;
+export const Sidebar = ({ role }) => {
+  const navigate = useNavigate();
 
-  const getNavItems = () => {
-    const baseItems = [
-      { 
-        name: "Dashboard", 
-        path: `/${user.role}/dashboard`, 
-        icon: LayoutDashboard 
-      },
-      { 
-        name: "Profile", 
-        path: "/profile", 
-        icon: Users 
-      },
-    ];
-
-    switch (user.role) {
-      case "admin":
-        return [
-          ...baseItems,
-          { name: "Freelancers", path: "/admin/freelancers", icon: Users },
-          { name: "Escrow", path: "/admin/escrow", icon: DollarSign },
-          { name: "Invoices", path: "/admin/invoices", icon: FileText },
-        ];
-      case "client":
-        return [
-          ...baseItems,
-          { name: "Projects", path: "/client/projects", icon: Briefcase },
-          { name: "Invoices", path: "/client/invoices", icon: FileText },
-        ];
-      case "freelancer":
-        return [
-          ...baseItems,
-          { name: "Projects", path: "/freelancer/projects", icon: Briefcase },
-          { name: "Invoices", path: "/freelancer/invoices", icon: FileText },
-        ];
-      default:
-        return baseItems;
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
-  const navItems = getNavItems();
+  // Reusable sidebar link
+  const SidebarLink = ({ to, icon: Icon, label }) => (
+    <Link
+      to={to}
+      className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-200 hover:bg-white/10 hover:text-white transition-all"
+    >
+      <Icon size={18} /> {label}
+    </Link>
+  );
+
+  const sidebarBase =
+    "bg-gray-900/90 backdrop-blur-md text-white w-64 h-screen fixed flex flex-col justify-between shadow-lg";
+
+  let links = [];
+  let title = "";
+
+  if (role === "client") {
+    title = "Client Portal";
+    links = [
+      { to: "/client/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/projects", icon: FolderOpen, label: "My Projects" },
+      { to: "/client/invoices", icon: FileText, label: "Invoices" },
+      { to: "/client/wallet", icon: DollarSign, label: "Wallet" }, // 💰 Added Wallet link
+      // { to: "/client/reviews", icon: Star, label: "Reviews" },
+    ];
+  } else if (role === "freelancer") {
+    title = "Freelancer Hub";
+    links = [
+      { to: "/freelancer/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/projects", icon: Briefcase, label: "Projects" },
+      { to: "/freelancer/invoices", icon: FileText, label: "Invoices" },
+      { to: "/freelancer/wallet", icon: DollarSign, label: "Wallet" }, // 💰 Added Wallet link
+      { to: "/profile", icon: UserCircle, label: "Profile" },
+    ];
+  } else if (role === "admin") {
+    title = "Admin Panel";
+    links = [
+      { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/admin/freelancers", icon: Users, label: "Freelancers" },
+      { to: "/admin/escrow", icon: ShieldCheck, label: "Escrow" },
+      { to: "/admin/invoices", icon: FileText, label: "Invoices" },
+    ];
+  }
 
   return (
-    <div className="bg-gray-800 text-white w-64 h-screen fixed p-6 flex flex-col">
-      {/* Logo */}
-      <div className="mb-8">
-        <h1 className="text-xl font-bold text-white">ReelBrief</h1>
-        <p className="text-sm text-gray-400 capitalize">{user.role}</p>
+    <aside className={sidebarBase}>
+      {/* Top Section */}
+      <div>
+        <div className="flex items-center justify-center mt-6 mb-8">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            {title}
+          </h2>
+        </div>
+
+        <nav className="flex flex-col space-y-2 px-4">
+          {links.map((link, index) => (
+            <SidebarLink key={index} {...link} />
+          ))}
+        </nav>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
-              }`}
-            >
-              <Icon size={20} />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Logout */}
-      <button
-        onClick={logout}
-        className="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors mt-auto"
-      >
-        <LogOut size={20} />
-        <span>Logout</span>
-      </button>
-    </div>
+      {/* Logout Section */}
+      <div className="p-4 border-t border-white/10">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-red-600 hover:text-white transition-all"
+        >
+          <LogOut size={18} /> Logout
+        </button>
+      </div>
+    </aside>
   );
 };
-
-export default Sidebar; 

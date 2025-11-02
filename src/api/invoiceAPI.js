@@ -4,26 +4,25 @@
  * Description: API calls for managing invoices.
  */
 
-import axios from "axios";
+import axiosClient from "./axiosClient";
 
-const BASE_URL = "/api/invoices";
-
+// Fetch all invoices (Admin sees all, others see their own)
 export const fetchInvoices = async (page = 1) => {
-  const response = await axios.get(`${BASE_URL}?page=${page}`);
+  const response = await axiosClient.get(`/api/invoices?page=${page}`);
   return response.data;
 };
 
 export const fetchInvoiceById = async (id) => {
-  const response = await axios.get(`${BASE_URL}/${id}`);
+  const response = await axiosClient.get(`/api/invoices/${id}`);
   return response.data;
 };
 
 export const createInvoice = async (invoiceData) => {
-  const response = await axios.post(BASE_URL, invoiceData);
+  const response = await axiosClient.post("/api/invoices", invoiceData);
   return response.data;
 };
 
 export const payInvoice = async (id) => {
-  const response = await axios.patch(`${BASE_URL}/${id}/pay`);
+  const response = await axiosClient.patch(`/api/invoices/${id}/pay`);
   return response.data;
 };
