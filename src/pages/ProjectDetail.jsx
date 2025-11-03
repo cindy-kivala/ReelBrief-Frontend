@@ -51,7 +51,7 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
   const loadPortfolioItems = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('/api/deliverables/portfolio/items', {
+      const response = await fetch('/api/deliverable/portfolio/items', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

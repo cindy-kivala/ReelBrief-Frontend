@@ -1,4 +1,5 @@
-// src/components/layout/Sidebar.jsx - FIXED VERSION
+// ✅ clean, correct version
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -49,6 +50,7 @@ const Sidebar = () => {
         return [
           ...baseItems,
           { name: "Projects", path: "/freelancer/projects", icon: Briefcase },
+          { name: "Portfolio", path: "/portfolio", icon: Briefcase }, // ✅ keep this only
           { name: "Invoices", path: "/freelancer/invoices", icon: FileText },
         ];
       default:
@@ -101,4 +103,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
