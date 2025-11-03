@@ -4,7 +4,7 @@
  * Description: Handles user profile and account management requests.
  */
 
-import api from "./axiosClient"; // Make sure axiosClient.js exports a configured Axios instance
+import api from "./axiosClient";
 
 /**
  * Get a user by ID
@@ -12,7 +12,7 @@ import api from "./axiosClient"; // Make sure axiosClient.js exports a configure
  * @returns {Promise<Object>} User data
  */
 export const getUserById = async (id) => {
-  const res = await api.get(`/users/${id}`);
+  const res = await api.get(`/api/users/${id}`); // ADD /api/ prefix
   return res.data;
 };
 
@@ -23,7 +23,7 @@ export const getUserById = async (id) => {
  * @returns {Promise<Object>} Updated user
  */
 export const updateUser = async (id, data) => {
-  const res = await api.patch(`/users/${id}`, data);
+  const res = await api.patch(`/api/users/${id}`, data); // ADD /api/ prefix
   return res.data;
 };
 
@@ -33,6 +33,12 @@ export const updateUser = async (id, data) => {
  * @returns {Promise<Object>} Paginated users
  */
 export const getAllUsers = async (page = 1) => {
-  const res = await api.get(`/users?page=${page}`);
+  const res = await api.get(`/api/users?page=${page}`); // ADD /api/ prefix
+  return res.data;
+};
+
+// Add any other user-related API calls with the /api/ prefix
+export const updateUserAvatar = async (id, formData) => {
+  const res = await api.patch(`/api/users/${id}/avatar`, formData); // ADD /api/ prefix
   return res.data;
 };

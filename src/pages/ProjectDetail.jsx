@@ -4,7 +4,8 @@ import {
   fetchDeliverablesByProject, 
   approveDeliverable, 
   rejectDeliverable, 
-  requestRevision 
+  requestRevision,
+  getDeliverableVersions 
 } from "../api/deliverableAPI";
 import { fetchFeedback, submitFeedback } from "../api/feedbackAPI"; 
 import CloudinaryUpload from "../components/deliverables/CloudinaryUpload";
@@ -22,9 +23,11 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("deliverables");
-  const [showVersions, setShowVersions] = useState(null);
   const [selectedDeliverableForFeedback, setSelectedDeliverableForFeedback] = useState(null);
   const [feedbacks, setFeedbacks] = useState({});
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [deliverableVersions, setDeliverableVersions] = useState({});
+  const [selectedDeliverableForVersions, setSelectedDeliverableForVersions] = useState(null);
 
   const { user } = useAuth();
   const isClient = user?.role === 'client';
@@ -41,6 +44,22 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
     } catch (error) {
       console.error('Failed to load feedback:', error);
       setFeedbacks(prev => ({
+        ...prev,
+        [deliverableId]: []
+      }));
+    }
+  };
+
+  const loadDeliverableVersions = async (deliverableId) => {
+    try {
+      const versions = await getDeliverableVersions(deliverableId);
+      setDeliverableVersions(prev => ({
+        ...prev,
+        [deliverableId]: versions
+      }));
+    } catch (error) {
+      console.error('Failed to load versions:', error);
+      setDeliverableVersions(prev => ({
         ...prev,
         [deliverableId]: []
       }));
@@ -94,6 +113,12 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
       loadFeedback(selectedDeliverableForFeedback.id);
     }
   }, [selectedDeliverableForFeedback]);
+
+  useEffect(() => {
+    if (selectedDeliverableForVersions) {
+      loadDeliverableVersions(selectedDeliverableForVersions.id);
+    }
+  }, [selectedDeliverableForVersions]);
 
   useEffect(() => {
     if (activeTab === "portfolio") {
@@ -429,7 +454,7 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                           <div className="flex gap-3">
                             <button 
                               onClick={() => {
-                                setShowVersions(deliverable.id);
+                                setSelectedDeliverableForVersions(deliverable);
                                 setActiveTab("versions");
                               }}
                               className="text-sm text-blue-600 hover:text-blue-800"
@@ -470,7 +495,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
 
               {portfolioItems.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <div className="text-6xl mb-4">📁</div>
                   <h4 className="text-xl font-semibold text-gray-700 mb-2">No Portfolio Items Yet</h4>
                   <p className="text-gray-600 mb-4 max-w-md mx-auto">
                     Your approved projects will automatically appear here once deliverables are approved by clients.
@@ -521,91 +545,128 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
           {/* Assign Freelancer Tab */}
           {activeTab === "assignment" && (isClient || isAdmin) && (
             <div className="space-y-6">
-              {project.freelancer_id ? (
-                // Already assigned - show info
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-green-800 mb-2">Freelancer Assigned</h3>
-                  <p className="text-green-700 mb-4">
-                    This project has been assigned to <strong>{project.freelancer_name}</strong>.
-                  </p>
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <h4 className="font-semibold mb-3">Assignment Details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Freelancer:</span>
-                        <span className="font-medium">{project.freelancer_name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Assigned At:</span>
-                        <span className="font-medium">
-                          {project.assigned_at ? new Date(project.assigned_at).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Status:</span>
-                        <span className="font-medium capitalize">{project.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                // Not assigned yet - show FreelancerMatch component
-                <>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Assign a Freelancer</h3>
-                    <p className="text-blue-700 mb-4">
-                      Browse and assign a qualified freelancer to this project. Once assigned, they will be able to upload deliverables.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-blue-800 mb-2">Assign a Freelancer</h3>
+                <p className="text-blue-700 mb-4">
+                  Assign a freelancer to this project to get started. Once assigned, the freelancer will be able to upload deliverables.
+                </p>
+                
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                >
+                  Browse Available Freelancers
+                </button>
+              </div>
+
+              {!loading && project && projectId && typeof projectId !== 'undefined' && !project.freelancer_id ? (
+                <div className="mt-6">
+                  <div className="bg-green-50 border border-green-200 p-3 rounded mb-4">
+                    <p className="text-green-700 text-sm">
+                      Debug: Project ID = {projectId} (type: {typeof projectId}), Status = {project.status}, Freelancer ID = {project.freelancer_id || 'None'}
                     </p>
                   </div>
-
-                  {/* FreelancerMatch Component */}
-                  {projectId && (
-                    <FreelancerMatch 
-                      projectId={projectId}
-                      onAssignmentComplete={(updatedProject) => {
-                        setProject(updatedProject);
-                        loadProject();
-                        if (onUpdated) onUpdated();
-                      }}
-                    />
-                  )}
-                </>
+                  
+                  <FreelancerMatch 
+                    projectId={projectId}
+                    onAssignmentComplete={(updatedProject) => {
+                      setProject(updatedProject);
+                      loadProject();
+                      if (onUpdated) onUpdated();
+                    }}
+                  />
+                </div>
+              ) : (
+                !loading && project && !project.freelancer_id && (
+                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700">
+                      Debug Info: Loading = {loading.toString()}, Project = {project ? 'exists' : 'null'}, 
+                      ProjectId = {projectId || 'undefined'} (type: {typeof projectId}), 
+                      Freelancer = {project?.freelancer_id || 'none'}
+                    </p>
+                  </div>
+                )
               )}
             </div>
           )}
 
-          {/* Version History Tab */}
+          {/* Version History Tab - NOW FUNCTIONAL */}
           {activeTab === "versions" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Version Comparison</h3>
-                {showVersions && (
+                <h3 className="text-lg font-semibold">Version History</h3>
+                {selectedDeliverableForVersions && (
                   <button
-                    onClick={() => setShowVersions(null)}
+                    onClick={() => setSelectedDeliverableForVersions(null)}
                     className="text-blue-600 hover:text-blue-800 text-sm"
                   >
-                    Back to List
+                    Back to All Deliverables
                   </button>
                 )}
               </div>
               
-              {showVersions ? (
-                <VersionCompare 
-                  projectId={projectId}
-                  deliverableId={showVersions}
-                  onBack={() => setShowVersions(null)}
-                />
+              {selectedDeliverableForVersions ? (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-800">
+                      Version History for: {selectedDeliverableForVersions.title}
+                    </h4>
+                    <p className="text-blue-700 text-sm mt-1">
+                      Compare different versions of this deliverable
+                    </p>
+                  </div>
+
+                  <VersionCompare 
+                    projectId={projectId}
+                    deliverableId={selectedDeliverableForVersions.id}
+                    versions={deliverableVersions[selectedDeliverableForVersions.id] || []}
+                  />
+                </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-gray-600">
-                    Compare different versions of deliverables side by side.
+                    Select a deliverable to view its version history and compare different versions.
                   </p>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-blue-800">
-                      Select a deliverable from the list above and click "View Version History" 
-                      to compare different versions.
-                    </p>
-                  </div>
+                  
+                  {deliverables.length === 0 ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-yellow-800">
+                        No deliverables available for version history.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {deliverables.map((deliverable) => (
+                        <div
+                          key={deliverable.id}
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setSelectedDeliverableForVersions(deliverable)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold">{deliverable.title}</h4>
+                              <p className="text-sm text-gray-600">
+                                Current Version: {deliverable.version_number} • {deliverable.status}
+                              </p>
+                              {deliverable.change_notes && (
+                                <p className="text-sm text-blue-600 mt-1">
+                                  <strong>Latest Changes:</strong> {deliverable.change_notes}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-blue-600">
+                                View Version History
+                              </p>
+                              <button className="text-blue-600 hover:text-blue-800 text-sm">
+                                Compare Versions →
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

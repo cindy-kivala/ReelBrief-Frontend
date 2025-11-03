@@ -1,11 +1,16 @@
 /**
- * AuthContext.jsx - FIXED LOGIN VERSION
- * Works with Flask JSON-based login route.
+ * AuthContext.jsx - FIXED VERSION
  */
 
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+
+// Create axios client with interceptors
+const axiosClient = axios.create({
+  baseURL: "http://localhost:5000/api",
+  withCredentials: true,
+});
 
 axiosClient.interceptors.request.use(
   (config) => {
@@ -26,52 +31,60 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
+      // Don't redirect automatically - let component handle it
+      console.log("Token expired or invalid");
     }
     return Promise.reject(error);
   }
 );
 
-// const AuthContext = createContext(null);
 const AuthContext = createContext();
-const API_URL = "http://localhost:5000/api/auth";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load current user if token exists
+  // Improved user loading with better error handling
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      axios
-        .get(`${API_URL}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        })
-        .then((res) => setUser(res.data.user))
-        .catch(() => setUser(null))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const checkAuthStatus = async () => {
+      const token = localStorage.getItem("access_token");
+      
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await axiosClient.get("/auth/me");
+        setUser(res.data.user);
+      } catch (error) {
+        console.log("Auth check failed:", error.response?.status);
+        // Clear invalid token
+        localStorage.removeItem("access_token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
   // Register (multipart/form-data)
   const register = async (formData) => {
     try {
-      const res = await axios.post(`${API_URL}/register`, formData, {
+      const res = await axiosClient.post("/auth/register", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
-      if (res.data.user) setUser(res.data.user);
-      toast.success("Registration successful!");
-      return res.data;
+      
+      if (res.data.access_token && res.data.user) {
+        localStorage.setItem("access_token", res.data.access_token);
+        setUser(res.data.user);
+        toast.success("Registration successful!");
+        return res.data;
+      }
     } catch (err) {
-      const message =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Failed to register.";
+      const message = err.response?.data?.error || "Failed to register.";
       toast.error(message);
       return null;
     }
@@ -80,19 +93,13 @@ export const AuthProvider = ({ children }) => {
   // Login (JSON)
   const login = async (form) => {
     try {
-      const res = await axios.post(
-        `${API_URL}/login`,
-        {
-          email: form.email,
-          password: form.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
+      const res = await axiosClient.post("/auth/login", {
+        email: form.email,
+        password: form.password,
+      });
 
       const { access_token, user } = res.data;
+      
       if (!access_token || !user) {
         toast.error("Invalid server response");
         return null;
@@ -104,10 +111,7 @@ export const AuthProvider = ({ children }) => {
       return user;
     } catch (err) {
       console.error("Login error:", err);
-      const message =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "Invalid email or password.";
+      const message = err.response?.data?.error || "Invalid email or password.";
       toast.error(message);
       return null;
     }
@@ -135,4 +139,12 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+export default AuthContext;

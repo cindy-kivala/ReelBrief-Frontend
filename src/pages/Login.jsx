@@ -31,6 +31,16 @@ export default function Login() {
     else navigate("/client/dashboard");
   };
 
+  // Quick fill for testing
+  const fillTestCredentials = (role) => {
+    const credentials = {
+      admin: { email: "admin@reelbrief.com", password: "admin123" },
+      client: { email: "sarah@techstartup.com", password: "client123" },
+      freelancer: { email: "alex@designer.com", password: "freelancer123" }
+    };
+    setForm(credentials[role]);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-xl shadow-md p-8 w-full max-w-md">
@@ -65,8 +75,33 @@ export default function Login() {
           </button>
         </form>
 
+        {/* Testing Credentials Section */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Test Accounts:</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => fillTestCredentials('admin')}
+              className="w-full text-left text-sm p-2 bg-red-50 hover:bg-red-100 rounded border border-red-200 text-red-700"
+            >
+              <strong>Admin:</strong> admin@reelbrief.com / admin123
+            </button>
+            <button
+              onClick={() => fillTestCredentials('client')}
+              className="w-full text-left text-sm p-2 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 text-blue-700"
+            >
+              <strong>Client:</strong> sarah@techstartup.com / client123
+            </button>
+            <button
+              onClick={() => fillTestCredentials('freelancer')}
+              className="w-full text-left text-sm p-2 bg-green-50 hover:bg-green-100 rounded border border-green-200 text-green-700"
+            >
+              <strong>Freelancer:</strong> alex@designer.com / freelancer123
+            </button>
+          </div>
+        </div>
+
         <p className="text-center text-sm text-gray-600 mt-6">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/register" className="text-blue-600 hover:underline">
             Sign up
           </Link>
