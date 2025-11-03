@@ -6,7 +6,8 @@
 
 import axiosClient from "./axiosClient";
 
-const BASE_URL = "/escrow";
+// const BASE_URL = "/escrow";
+const BASE_URL = "/api/escrow";
 
 /**
  * Create a new escrow for a project

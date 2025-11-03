@@ -30,7 +30,7 @@ import FreelancerProjects from "../pages/freelancer/FreelancerProjects";
 import FreelancerCreateInvoice from "../pages/freelancer/Invoices/CreateInvoice";
 import FreelancerInvoiceDetail from "../pages/freelancer/Invoices/InvoiceDetail";
 import FreelancerInvoiceList from "../pages/freelancer/Invoices/InvoiceList";
-
+import FreelancerWallet from "../pages/freelancer/FreelancerWallet";
 //  Client Pages 
 import ClientDashboard from "../pages/client/ClientDashboard";
 import ClientProjects from "../pages/client/ClientProjects";
@@ -38,7 +38,7 @@ import ClientInvoiceDetail from "../pages/client/Invoices/InvoiceDetail";
 import ClientInvoiceList from "../pages/client/Invoices/InvoiceList";
 import ClientInvoicePay from "../pages/client/Invoices/InvoicePayment";
 import ProjectCreate from '../pages/client/ProjectCreate';
-
+import ClientWallet from "../pages/client/ClientWallet";
 
 //  Shared Protected Pages 
 import Profile from "../pages/Profile";
@@ -173,6 +173,15 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+        <Route
+        path="/freelancer/wallet"
+        element={
+          <ProtectedRoute allowedRoles={["freelancer"]}>
+            <FreelancerWallet />
+          </ProtectedRoute>
+        }
+        />
+
 
         {/*  Client Routes  */}
         <Route
@@ -220,6 +229,14 @@ function AppRouter() {
               <ClientInvoicePay />
             </ProtectedRoute>
           }
+        />
+        <Route
+        path="/client/wallet"
+        element={
+          <ProtectedRoute allowedRoles={["client"]}>
+            <ClientWallet />
+          </ProtectedRoute>
+        }
         />
 
         {/*  Shared Protected Routes  */}
