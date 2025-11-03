@@ -6,7 +6,7 @@
 import axios from "axios";
 
 // FIX: Changed VITE_API_URL to VITE_API_BASE_URL to match .env file
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 console.log("Axios Base URL:", BASE_URL);
 
 // Create axios instance with credentials support for CORS

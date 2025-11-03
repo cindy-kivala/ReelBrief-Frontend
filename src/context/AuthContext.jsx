@@ -5,12 +5,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-
-// Create axios client with interceptors
-const axiosClient = axios.create({
-  baseURL: "http://localhost:5000/api",
-  withCredentials: true,
-});
+import axiosClient from '../api/axiosClient'; 
 
 axiosClient.interceptors.request.use(
   (config) => {
