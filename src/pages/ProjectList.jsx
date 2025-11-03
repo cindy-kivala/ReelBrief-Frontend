@@ -12,7 +12,7 @@ export default function ProjectList() {
   const [projects, setProjects] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [openCreate, setOpenCreate] = useState(false); // Keep this state
+  const [openCreate, setOpenCreate] = useState(false); 
   const [selected, setSelected] = useState(null);
   const [assignProject, setAssignProject] = useState(null);
   const [search, setSearch] = useState("");

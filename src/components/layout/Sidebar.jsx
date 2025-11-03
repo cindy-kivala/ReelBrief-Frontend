@@ -3,7 +3,8 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
-  Briefcase, 
+  Briefcase,
+  CheckSquare, 
   FileText, 
   Users, 
   DollarSign,
@@ -38,6 +39,7 @@ const Sidebar = () => {
           { name: "Freelancers", path: "/admin/freelancers", icon: Users },
           { name: "Escrow", path: "/admin/escrow", icon: DollarSign },
           { name: "Invoices", path: "/admin/invoices", icon: FileText },
+          { name: "Project Approval", path: "/admin/project-approval", icon: CheckSquare },
         ];
       case "client":
         return [

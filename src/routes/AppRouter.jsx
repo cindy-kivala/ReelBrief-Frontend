@@ -22,6 +22,7 @@ import FreelancerVetting from "../pages/admin/FreelancerVetting";
 import EscrowManagement from "../pages/admin/EscrowManagement";
 import AdminInvoiceDetail from "../pages/admin/Invoices/InvoiceDetail";
 import AdminInvoiceList from "../pages/admin/Invoices/InvoiceList";
+import ProjectApproval from "../pages/admin/ProjectApproval";
 
 //  Freelancer Pages 
 import FreelancerDashboard from "../pages/freelancer/FreelancerDashboard";
@@ -118,6 +119,15 @@ function AppRouter() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminInvoiceDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/project-approval"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ProjectApproval />
             </ProtectedRoute>
           }
         />

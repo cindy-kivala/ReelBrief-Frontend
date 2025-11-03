@@ -9,9 +9,9 @@ import {
 import { fetchFeedback, submitFeedback } from "../api/feedbackAPI"; 
 import CloudinaryUpload from "../components/deliverables/CloudinaryUpload";
 import VersionCompare from '../components/deliverables/VersionCompare';
-import AssignFreelancerModal from '../components/projects/AssignFreelancerModal';
 import FeedbackForm from '../components/deliverables/FeedbackForm';
 import FeedbackList from '../components/deliverables/FeedbackList';
+import FreelancerMatch from '../components/projects/FreelancerMatch';
 import DownloadButton from "../components/deliverables/DownloadButton";
 import { useAuth } from "../context/AuthContext";
 
@@ -22,7 +22,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("deliverables");
-  const [showAssignModal, setShowAssignModal] = useState(false);
   const [showVersions, setShowVersions] = useState(null);
   const [selectedDeliverableForFeedback, setSelectedDeliverableForFeedback] = useState(null);
   const [feedbacks, setFeedbacks] = useState({});
@@ -131,7 +130,7 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
     }
   }, [projectId]);
 
-  // Action handlers for client/admin actions
+  // Action handlers
   const handleApprove = async (deliverableId) => {
     try {
       await approveDeliverable(deliverableId);
@@ -171,36 +170,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
     } catch (error) {
       console.error('Failed to request revision:', error);
       setError('Failed to request revision');
-    }
-  };
-
-  const handleAssignFreelancer = async (freelancerUserId) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`/api/projects/${projectId}/assign-freelancer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          freelancer_id: freelancerUserId
-        })
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        console.log('Freelancer assigned successfully:', result);
-        setProject(result.project);
-        setShowAssignModal(false);
-        if (onUpdated) onUpdated();
-      } else {
-        setError(result.error || 'Failed to assign freelancer');
-      }
-    } catch (error) {
-      console.error('Error assigning freelancer:', error);
-      setError('Error assigning freelancer');
     }
   };
 
@@ -258,35 +227,10 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                 {project.freelancer_id ? 'Assigned To' : 'Client'}
               </h3>
               <p className="mt-1">
-                {project.freelancer_id ? `Freelancer #${project.freelancer_id}` : `Client #${project.client_id}`}
+                {project.freelancer_name || `Client #${project.client_id}`}
               </p>
             </div>
           </div>
-
-          {/* Assignment Status */}
-          {(isClient || isAdmin) && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-semibold text-gray-700">Freelancer Assignment</h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {project.freelancer_id 
-                      ? 'Project has been assigned to a freelancer'
-                      : 'No freelancer assigned yet'
-                    }
-                  </p>
-                </div>
-                {!project.freelancer_id && (
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Assign Freelancer
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Tabs */}
@@ -313,11 +257,12 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                     : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
-                📁 Portfolio
+                Portfolio
               </button>
             )}
             
-            {(isClient || isAdmin) && !project.freelancer_id && (
+            {/* Assignment Tab - Show for client/admin */}
+            {(isClient || isAdmin) && (
               <button
                 onClick={() => setActiveTab("assignment")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -326,9 +271,10 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                     : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
-                Assign Freelancer
+                {project.freelancer_id ? 'Assignment Info' : 'Assign Freelancer'}
               </button>
             )}
+            
             <button
               onClick={() => setActiveTab("versions")}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -529,15 +475,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                   <p className="text-gray-600 mb-4 max-w-md mx-auto">
                     Your approved projects will automatically appear here once deliverables are approved by clients.
                   </p>
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                    <p className="text-blue-800 text-sm">
-                      <strong>How it works:</strong><br/>
-                      • Upload deliverables as a freelancer<br/>
-                      • Client approves the deliverables<br/>
-                      • Portfolio items are automatically created<br/>
-                      • Showcase your work to potential clients
-                    </p>
-                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -564,42 +501,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
                         />
                       )}
                       
-                      {/* Skills */}
-                      {item.skills_used && item.skills_used.length > 0 && (
-                        <div className="mb-4">
-                          <h5 className="text-sm font-semibold text-gray-700 mb-2">Skills Used:</h5>
-                          <div className="flex flex-wrap gap-1">
-                            {item.skills_used.map((skill, index) => (
-                              <span 
-                                key={index}
-                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Project Details */}
-                      <div className="space-y-2 text-sm text-gray-600 mb-4">
-                        {item.project_duration && (
-                          <div className="flex justify-between">
-                            <span>Duration:</span>
-                            <span className="font-medium">{item.project_duration}</span>
-                          </div>
-                        )}
-                        {item.completion_date && (
-                          <div className="flex justify-between">
-                            <span>Completed:</span>
-                            <span className="font-medium">
-                              {new Date(item.completion_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Toggle Visibility */}
                       <button
                         onClick={() => togglePortfolioVisibility(item.id, item.is_visible)}
                         className={`w-full px-4 py-2 rounded-lg transition-colors ${
@@ -620,35 +521,56 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
           {/* Assign Freelancer Tab */}
           {activeTab === "assignment" && (isClient || isAdmin) && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-blue-800 mb-2">Assign a Freelancer</h3>
-                <p className="text-blue-700 mb-4">
-                  Assign a freelancer to this project to get started. Once assigned, the freelancer will be able to upload deliverables.
-                </p>
-                
-                <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  Browse Available Freelancers
-                </button>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h4 className="font-semibold mb-3">Assignment Status</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Current Status:</span>
-                    <span className="font-medium capitalize">{project.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Freelancer Assigned:</span>
-                    <span className="font-medium">
-                      {project.freelancer_id ? `Yes (ID: ${project.freelancer_id})` : 'No'}
-                    </span>
+              {project.freelancer_id ? (
+                // Already assigned - show info
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">Freelancer Assigned</h3>
+                  <p className="text-green-700 mb-4">
+                    This project has been assigned to <strong>{project.freelancer_name}</strong>.
+                  </p>
+                  <div className="bg-white rounded-lg p-4 border border-green-200">
+                    <h4 className="font-semibold mb-3">Assignment Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Freelancer:</span>
+                        <span className="font-medium">{project.freelancer_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Assigned At:</span>
+                        <span className="font-medium">
+                          {project.assigned_at ? new Date(project.assigned_at).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <span className="font-medium capitalize">{project.status}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                // Not assigned yet - show FreelancerMatch component
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2">Assign a Freelancer</h3>
+                    <p className="text-blue-700 mb-4">
+                      Browse and assign a qualified freelancer to this project. Once assigned, they will be able to upload deliverables.
+                    </p>
+                  </div>
+
+                  {/* FreelancerMatch Component */}
+                  {projectId && (
+                    <FreelancerMatch 
+                      projectId={projectId}
+                      onAssignmentComplete={(updatedProject) => {
+                        setProject(updatedProject);
+                        loadProject();
+                        if (onUpdated) onUpdated();
+                      }}
+                    />
+                  )}
+                </>
+              )}
             </div>
           )}
 
@@ -775,16 +697,6 @@ export default function ProjectDetail({ projectId, onClose, onUpdated }) {
           )}
         </div>
       </div>
-
-      {/* Assign Freelancer Modal */}
-      {showAssignModal && (
-        <AssignFreelancerModal
-          projectId={projectId}
-          isOpen={showAssignModal}
-          onClose={() => setShowAssignModal(false)}
-          onAssign={handleAssignFreelancer}
-        />
-      )}
     </div>
   );
 }
