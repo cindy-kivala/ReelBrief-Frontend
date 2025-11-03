@@ -1,3 +1,4 @@
+
 // clean, correct version
 
 import React from "react";
@@ -78,7 +79,7 @@ export const Sidebar = ({ role }) => {
         return [
           ...baseItems,
           { name: "Projects", path: "/freelancer/projects", icon: Briefcase },
-          { name: "Portfolio", path: "/portfolio", icon: Briefcase }, // ✅ keep this only
+          { name: "Portfolio", path: "/portfolio", icon: Briefcase }, // keep this only
           { name: "Invoices", path: "/freelancer/invoices", icon: FileText },
         ];
       default:
@@ -108,7 +109,7 @@ export const Sidebar = ({ role }) => {
       { to: "/client/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/projects", icon: FolderOpen, label: "My Projects" },
       { to: "/client/invoices", icon: FileText, label: "Invoices" },
-      { to: "/client/wallet", icon: DollarSign, label: "Wallet" }, // 💰 Added Wallet link
+      { to: "/client/wallet", icon: DollarSign, label: "Wallet" }, // Added Wallet link
       // { to: "/client/reviews", icon: Star, label: "Reviews" },
     ];
   } else if (role === "freelancer") {
@@ -117,7 +118,7 @@ export const Sidebar = ({ role }) => {
       { to: "/freelancer/dashboard", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/projects", icon: Briefcase, label: "Projects" },
       { to: "/freelancer/invoices", icon: FileText, label: "Invoices" },
-      { to: "/freelancer/wallet", icon: DollarSign, label: "Wallet" }, // 💰 Added Wallet link
+      { to: "/freelancer/wallet", icon: DollarSign, label: "Wallet" }, // Added Wallet link
       { to: "/profile", icon: UserCircle, label: "Profile" },
     ];
   } else if (role === "admin") {
@@ -161,3 +162,4 @@ export const Sidebar = ({ role }) => {
 };
 
 export default Sidebar;
+

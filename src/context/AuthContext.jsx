@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Login (JSON)
+  // Login (JSON)
   const login = async (form) => {
     try {
       const res = await axios.post(

@@ -23,13 +23,19 @@ const REFRESH_TOKEN_KEY = "refresh_token";
 
 const getAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 const getRefreshToken = () => localStorage.getItem(REFRESH_TOKEN_KEY);
-const setAccessToken = (token) => {
+
+export const setAccessToken = (token) => {
   if (token) {
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
     axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
   }
 };
-const clearTokens = () => {
+
+export const setRefreshToken = (token) => {
+  if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token);
+};
+
+export const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   delete axiosClient.defaults.headers.Authorization;
@@ -55,28 +61,24 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    // Expired access token → try refresh once
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
+    const original = error.config;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const refresh = getRefreshToken();
+      if (!refresh) {
         clearTokens();
         window.location.href = "/login";
         return Promise.reject(error);
       }
-
       try {
         const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
           headers: { Authorization: `Bearer ${refreshToken}` },
           withCredentials: true,
         });
-        if (res.data?.access_token) {
-          setAccessToken(res.data.access_token);
-          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
-          return axiosClient(originalRequest);
+        if (r.data?.access_token) {
+          setAccessToken(r.data.access_token);
+          original.headers.Authorization = `Bearer ${r.data.access_token}`;
+          return axiosClient(original);
         }
       } catch (e) {
         clearTokens();
@@ -84,7 +86,6 @@ axiosClient.interceptors.response.use(
         return Promise.reject(e);
       }
     }
-
     return Promise.reject(error);
   }
 );

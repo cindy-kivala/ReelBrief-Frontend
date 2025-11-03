@@ -1,7 +1,7 @@
 /**
  * authAPI.js
  * Owner: Ryan
- * Description: Handles authentication-related API requests using JWT.
+ * Description: Auth endpoints wrapper.
  */
 import axiosClient from "./axiosClient";
 
@@ -21,19 +21,19 @@ const clearTokens = () => {
 };
 
 const authAPI = {
-  // Register (supports file upload) → returns dev_verify_url + verification_token
-  register: async (data) => {
-    const res = await axiosClient.post("/api/auth/register", data, {
+  register: async (formData /* FormData */) => {
+    const res = await axiosClient.post("/api/auth/register", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return res.data; // { message, dev_verify_url, verification_token }
+    return res.data; // { message, dev_verify_url? }
   },
 
   login: async (credentials) => {
     const res = await axiosClient.post("/api/auth/login", credentials);
     const { access_token, refresh_token, user } = res.data;
-    if (access_token) storeTokens(access_token, refresh_token);
-    return { user, access_token };
+    if (access_token) setAccessToken(access_token);
+    if (refresh_token) setRefreshToken(refresh_token);
+    return { user, access_token, refresh_token };
   },
 
   verifyEmail: async (token) => {
@@ -41,12 +41,7 @@ const authAPI = {
     return res.data;
   },
 
-  resendVerification: async (email) => {
-    const res = await axiosClient.post("/api/auth/resend-verification", { email });
-    return res.data;
-  },
-
-  getCurrentUser: async () => {
+  me: async () => {
     const res = await axiosClient.get("/api/auth/me");
     return res.data;
   },
