@@ -1,17 +1,21 @@
 /**
- * authAPI.js
+ * authAPI.js - FIXED VERSION
  * Owner: Ryan
- * Description: Auth endpoints wrapper.
+ * Description: Auth endpoints wrapper with correct API paths.
  */
 import axiosClient from "./axiosClient";
 
 const TOKEN_KEY = "access_token";
 const REFRESH_KEY = "refresh_token";
 
-const storeTokens = (access, refresh) => {
-  if (access) localStorage.setItem(TOKEN_KEY, access);
-  if (refresh) localStorage.setItem(REFRESH_KEY, refresh);
-  axiosClient.defaults.headers.Authorization = `Bearer ${access}`;
+// Token management functions
+const setAccessToken = (token) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  axiosClient.defaults.headers.Authorization = `Bearer ${token}`;
+};
+
+const setRefreshToken = (token) => {
+  localStorage.setItem(REFRESH_KEY, token);
 };
 
 const clearTokens = () => {
@@ -21,11 +25,15 @@ const clearTokens = () => {
 };
 
 const authAPI = {
-  register: async (formData /* FormData */) => {
+  register: async (formData) => {
     const res = await axiosClient.post("/api/auth/register", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return res.data; // { message, dev_verify_url? }
+    // Store tokens if returned
+    if (res.data.access_token) {
+      setAccessToken(res.data.access_token);
+    }
+    return res.data;
   },
 
   login: async (credentials) => {
@@ -46,9 +54,30 @@ const authAPI = {
     return res.data;
   },
 
+  refreshToken: async () => {
+    const refreshToken = localStorage.getItem(REFRESH_KEY);
+    const res = await axiosClient.post("/api/auth/refresh", { refresh_token: refreshToken });
+    const { access_token } = res.data;
+    if (access_token) setAccessToken(access_token);
+    return access_token;
+  },
+
   logout: async () => {
     clearTokens();
     return Promise.resolve();
+  },
+
+  requestPasswordReset: async (email) => {
+    const res = await axiosClient.post("/api/auth/reset-password", { email });
+    return res.data;
+  },
+
+  resetPassword: async (token, newPassword) => {
+    const res = await axiosClient.post("/api/auth/reset-password", {
+      token,
+      new_password: newPassword,
+    });
+    return res.data;
   },
 };
 
