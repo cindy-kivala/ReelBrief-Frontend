@@ -1,3 +1,5 @@
+// clean, correct version
+
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -58,6 +60,30 @@ export const Sidebar = ({ role }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
+    switch (user.role) {
+      case "admin":
+        return [
+          ...baseItems,
+          { name: "Freelancers", path: "/admin/freelancers", icon: Users },
+          { name: "Escrow", path: "/admin/escrow", icon: DollarSign },
+          { name: "Invoices", path: "/admin/invoices", icon: FileText },
+        ];
+      case "client":
+        return [
+          ...baseItems,
+          { name: "Projects", path: "/client/projects", icon: Briefcase },
+          { name: "Invoices", path: "/client/invoices", icon: FileText },
+        ];
+      case "freelancer":
+        return [
+          ...baseItems,
+          { name: "Projects", path: "/freelancer/projects", icon: Briefcase },
+          { name: "Portfolio", path: "/portfolio", icon: Briefcase }, // ✅ keep this only
+          { name: "Invoices", path: "/freelancer/invoices", icon: FileText },
+        ];
+      default:
+        return baseItems;
+    }
   };
 
   // Reusable sidebar link
@@ -133,3 +159,5 @@ export const Sidebar = ({ role }) => {
     </aside>
   );
 };
+
+export default Sidebar;

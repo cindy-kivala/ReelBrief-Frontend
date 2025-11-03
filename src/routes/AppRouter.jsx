@@ -16,6 +16,7 @@ import Register from "../pages/Register";
 import VerifyEmail from "../pages/VerifyEmail";
 import Notifications from "../pages/Notifications";
 
+
 //  Admin Pages 
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import FreelancerVetting from "../pages/admin/FreelancerVetting";
@@ -44,6 +45,7 @@ import ClientWallet from "../pages/client/ClientWallet";
 import Profile from "../pages/Profile";
 import ProjectDetailPage from "../pages/ProjectDetailPage";
 import ProjectList from "../pages/ProjectList";
+import Portfolio from "../pages/Portfolio";
 
 // Protected Route 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -275,6 +277,15 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/portfolio"
+          element={
+            <ProtectedRoute allowedRoles={["freelancer"]}>
+              <Portfolio />
+            </ProtectedRoute>
+          }
+        />
+
 
         {/*  Fallback  */}
         <Route path="*" element={<Navigate to="/" replace />} />
