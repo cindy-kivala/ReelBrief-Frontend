@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await axiosClient.get("/auth/me");
+        const res = await axiosClient.get("api/auth/me");
         setUser(res.data.user);
       } catch (error) {
         console.log("Auth check failed:", error.response?.status);
@@ -67,23 +67,23 @@ export const AuthProvider = ({ children }) => {
 
   // Register (multipart/form-data)
   const register = async (formData) => {
-    try {
-      const res = await axiosClient.post("/auth/register", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      
-      if (res.data.access_token && res.data.user) {
-        localStorage.setItem("access_token", res.data.access_token);
-        setUser(res.data.user);
-        toast.success("Registration successful!");
-        return res.data;
-      }
-    } catch (err) {
-      const message = err.response?.data?.error || "Failed to register.";
-      toast.error(message);
-      return null;
+  try {
+    const res = await axiosClient.post("/api/auth/register", formData, {  // ← ADD /api here
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    
+    if (res.data.access_token && res.data.user) {
+      localStorage.setItem("access_token", res.data.access_token);
+      setUser(res.data.user);
+      toast.success("Registration successful!");
+      return res.data;
     }
-  };
+  } catch (err) {
+    const message = err.response?.data?.error || "Failed to register.";
+    toast.error(message);
+    return null;
+  }
+};
 
   // Login (JSON)
   const login = async (form) => {
